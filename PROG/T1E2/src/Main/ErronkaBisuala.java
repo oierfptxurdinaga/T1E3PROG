@@ -10,6 +10,7 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import E2.Taldea;
 import Metodoak.Metodoak;
+//PROBA
 /**
  * ErronkaBisuala klasea aplikazioaren leiho nagusia da.
  * <p>
