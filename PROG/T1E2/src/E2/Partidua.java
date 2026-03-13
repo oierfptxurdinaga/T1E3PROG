@@ -21,15 +21,17 @@ package E2;
  * @version 1.0
  */
 public class Partidua {
+	private int Id_Par;
 	private String TaldeLokala;
 	private String TaldeBisitari;
 	private int ResultLokala;
 	private int ResulBisitari;
 	private String Data;
 	private String Ordua;
-	public Partidua(String taldeLokala, String taldeBisitari, int resultLokala, int resulBisitari, String data,
+	public Partidua(int id_Par, String taldeLokala, String taldeBisitari, int resultLokala, int resulBisitari, String data,
 			String ordua) {
 		super();
+		Id_Par = id_Par;
 		TaldeLokala = taldeLokala;
 		TaldeBisitari = taldeBisitari;
 		ResultLokala = resultLokala;
@@ -37,6 +39,15 @@ public class Partidua {
 		Data = data;
 		Ordua = ordua;
 	}
+	
+	public int getId_Par() {
+		return Id_Par;
+	}
+
+	public void setId_Par(int id_Par) {
+		Id_Par = id_Par;
+	}
+
 	public String getTaldeLokala() {
 		return TaldeLokala;
 	}

@@ -7,6 +7,10 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import DAO.JaurdunaldiDao;
+import DAO.PartiduaDao;
+import DAO.TaldeDao;
 import E2.*;
 
 /**
@@ -42,6 +46,10 @@ public class Metodoak {
      * </p>
      */
 	public static ArrayList<Taldea> taldeakMasterList = new ArrayList<>();
+	private  TaldeDao talde;
+	private static  JaurdunaldiDao jaurdunaldi;
+	private static  PartiduaDao partidua;
+
 
 	// --- Fitxategien kudeaketa ---
 	/**
@@ -56,18 +64,10 @@ public class Metodoak {
      * errore-mezu bat bistaratzen da.
      * </p>
      */
-	@SuppressWarnings("unchecked")
-	public static void kargatuDatuak() {
-		File f = new File("datuak.ser");
-		if (f.exists()) {
-			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
-				taldeakMasterList = (ArrayList<Taldea>) ois.readObject();
-			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, "Ezin izan dira Datuak Kargatu", "Errorea", JOptionPane.ERROR_MESSAGE);
-			}
-		} else {
-			JOptionPane.showMessageDialog(null, "Ez da Datuak.ser artxiboa aurkitu", "Errorea", JOptionPane.ERROR_MESSAGE);
-		}
+	public  void kargatuDatuak() {
+		talde = new TaldeDao();
+		taldeakMasterList = talde.kargatuTaldeak();
+		
 	}
 	/**
      * Uneko datuak fitxategian gordetzen ditu.
@@ -77,11 +77,7 @@ public class Metodoak {
      * </p>
      */
 	public static void gordeDatuak() {
-		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("datuak.ser"))) {
-			oos.writeObject(taldeakMasterList);
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Ezin izan dira gorde aldaketak", "Errorea", JOptionPane.ERROR_MESSAGE);
-		}
+		
 	}
 	/**
      * Aplikazioko erabiltzaileak hasieratzen ditu.
@@ -190,7 +186,7 @@ public class Metodoak {
 			for (Jokalaria j : t.getJokalariak()) {
 				modelo.addRow(new Object[] {
 					j.getIzena(), j.getAbizena(), j.getJaiotzeData(),
-					j.getNAN(), t.getIzena(), j.getPrezioa(), j.getJokalarienPuntuak()
+					j.getNAN(), t.getIzena(), j.getPrezioa()
 				});
 			}
 		}
@@ -209,6 +205,46 @@ public class Metodoak {
      * @param tablaPequena taldearen laburpena erakusten duen taula
      * @param tablaGrande jokalarien zerrenda erakusten duen taula
      */
+	
+	public static void beteEmaitzenTaula(DefaultTableModel modeloEmaitzak) {
+	    // 1. Supongamos que ya tienes estas listas cargadas (si no, las cargamos)
+	    if (jaurdunaldi == null) jaurdunaldi = new JaurdunaldiDao();
+	    if (partidua == null) partidua = new PartiduaDao();
+
+	    ArrayList<Jaurdunaldia> listaJornadas = jaurdunaldi.kargatuJaurdunaldiak();
+	    ArrayList<Partidua> listaPartidos = partidua.kargatuPartiduak();
+
+	    // 2. Limpiamos la tabla
+	    modeloEmaitzak.setRowCount(0);
+
+	    // 3. Cruzamos los datos manualmente
+	    for (Jaurdunaldia j : listaJornadas) {
+	        int puntosLoc = 0;
+	        int puntosVis = 0;
+
+	        // Buscamos el partido que coincida con el Id_Par de la jornada
+	        for (Partidua p : listaPartidos) {
+	            // Suponiendo que tu POJO Jaurdunaldia tiene getIdPar() 
+	            // y que coinciden en el orden o ID
+	            if (j.getIdPar() == p.getId_Par()) { 
+	                puntosLoc = p.getResultLokala();
+	                puntosVis = p.getResulBisitari();
+	                break; // Ya lo encontramos, salimos del bucle interno
+	            }
+	        }
+
+	        // 4. Creamos la fila con tu formato original de 5 columnas
+	        Object[] fila = {
+	            "Jornada " + j.getIdJaurdu() + " - " + j.getTaldeIrabazlea(), // Col 0
+	            puntosLoc,                                                   // Col 1
+	            "vs",                                                        // Col 2
+	            puntosVis,                                                   // Col 3
+	            j.getTaldeGaldu()                                            // Col 4
+	        };
+	        modeloEmaitzak.addRow(fila);
+	    }
+	}
+	
 	public static void actualizarTablasTaldeak(String seleccionado, JTable tablaPequena, JTable tablaGrande) {
 		if (seleccionado == null) return;
 
@@ -239,7 +275,7 @@ public class Metodoak {
 			for (Jokalaria j : t.getJokalariak()) {
 				modeloGrande.addRow(new Object[] {
 					j.getIzena(), j.getAbizena(), j.getJaiotzeData(),
-					j.getNAN(), t.getIzena(), j.getPrezioa(), j.getJokalarienPuntuak()
+					j.getNAN(), t.getIzena(), j.getPrezioa()
 				});
 			}
 		}

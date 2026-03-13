@@ -17,18 +17,29 @@ import java.util.ArrayList;
  * @version 1.0
  */
 public class Jaurdunaldia {
-	private ArrayList<Partidua> jaurdunaldia;
+    private int idPar;
+    private int idJaurdu;
+    private String taldeIrabazlea;
+    private String taldeGaldu;
 
-	public Jaurdunaldia(ArrayList<Partidua> jaurdunaldia) {
-		super();
-		this.jaurdunaldia = jaurdunaldia;
+    public Jaurdunaldia(int idPar, int idJaurdu, String taldeIrabazlea, String taldeGaldu) {
+        this.idPar = idPar;
+        this.idJaurdu = idJaurdu;
+        this.taldeIrabazlea = taldeIrabazlea;
+        this.taldeGaldu = taldeGaldu;
+    }
+
+    // Getters
+    
+    public int getIdJaurdu() { return idJaurdu; }
+    public int getIdPar() {
+		return idPar;
 	}
 
-	public ArrayList<Partidua> getJaurdunaldia() {
-		return jaurdunaldia;
+	public void setIdPar(int idPar) {
+		this.idPar = idPar;
 	}
 
-	public void setJaurdunaldia(ArrayList<Partidua> jaurdunaldia) {
-		this.jaurdunaldia = jaurdunaldia;
-	}
+	public String getTaldeIrabazlea() { return taldeIrabazlea != null ? taldeIrabazlea : "---"; }
+    public String getTaldeGaldu() { return taldeGaldu != null ? taldeGaldu : "---"; }
 }

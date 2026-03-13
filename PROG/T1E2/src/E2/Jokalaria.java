@@ -30,8 +30,7 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 	private int JokalarienPuntuak;
 
 	
-	public Jokalaria(String izena, String abizena, String jaiotzeData, String nAN, String taldea, int prezioa,
-			int jokalarienPuntuak) {
+	public Jokalaria(String izena, String abizena, String jaiotzeData, String nAN, String taldea, int prezioa) {
 		super();
 		Izena = izena;
 		Abizena = abizena;
@@ -39,7 +38,6 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 		NAN = nAN;
 		Taldea = taldea;
 		Prezioa = prezioa;
-		JokalarienPuntuak = jokalarienPuntuak;
 	}
 	public Jokalaria(Jokalaria besteJokalariBat) {
 	    super();
@@ -49,7 +47,6 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 	    this.NAN = besteJokalariBat.NAN;
 	    this.Taldea = besteJokalariBat.Taldea;
 	    this.Prezioa = besteJokalariBat.Prezioa;
-	    this.JokalarienPuntuak = besteJokalariBat.JokalarienPuntuak;
 	}
 
 	public String getIzena() {
@@ -82,14 +79,6 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 
 	public void setPrezioa(int prezioa) {
 		Prezioa = prezioa;
-	}
-
-	public int getJokalarienPuntuak() {
-		return JokalarienPuntuak;
-	}
-
-	public void setJokalarienPuntuak(int jokalarienPuntuak) {
-		JokalarienPuntuak = jokalarienPuntuak;
 	}
 
 	public String getJaiotzeData() {

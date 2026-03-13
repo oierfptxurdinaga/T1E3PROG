@@ -55,19 +55,19 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         setSize(1000, 700);
         setLocationRelativeTo(null);
         titleFont = new Font("Verdana", Font.BOLD, 24);
+     // --- Panelak Inizializatu ---
+        inizializatuPanelak();
+        konfiguratuOsagaiBisualak();
 
         // --- Datuak Kargatu ---
-        Metodoak.kargatuDatuak();
+        Metodoak.beteEmaitzenTaula(modeloEmaitzak);
 
         // --- Layout Konfigurazioa ---
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         setContentPane(contentPanel);
 
-        // --- Panelak Inizializatu ---
-        inizializatuPanelak();
-        konfiguratuOsagaiBisualak();
-
+        
         // --- Gehitu Panelak ---
         contentPanel.add(LoginPanela, "Login");
         contentPanel.add(HasierakoPanela, "Hasiera");
