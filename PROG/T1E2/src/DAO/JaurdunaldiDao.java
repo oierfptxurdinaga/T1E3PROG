@@ -35,4 +35,17 @@ public class JaurdunaldiDao {
 	    return lista;
 	}
 
+	public void eguneratuIrabazlea(int idPar, String irabazlea, String galtzailea) {
+	    String sql = "UPDATE jaurdunaldia SET Talde_Irabazlea = ?, Talde_Galdu = ? WHERE Id_Par = ?";
+	    try (Connection kon = db.konektatu();
+	         PreparedStatement ps = kon.prepareStatement(sql)) {
+	        ps.setString(1, irabazlea);
+	        ps.setString(2, galtzailea);
+	        ps.setInt(3, idPar);
+	        ps.executeUpdate(); // Hau da exekutatzen duena
+	    } catch (Exception e) {
+	        System.out.println("Errorea Jaurdunaldia eguneratzean: " + e.getMessage());
+	    }
+	}
+
 }

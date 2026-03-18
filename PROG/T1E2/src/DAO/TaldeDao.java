@@ -28,9 +28,7 @@ public class TaldeDao {
 
                 // --- DEIA BESTE DAO-ARI ---
                 // Talde bakoitzeko, bere jokalariak lortzen ditugu JokalariaDao-tik
-                ArrayList<Jokalaria> jokalariak = jokalariaDao.kargatuJokalariak();
-
-                // --- TALDE OBJEKTUA (10 parametro) ---
+                ArrayList<Jokalaria> jokalariak = jokalariaDao.kargatuJokalariakTaldeka(tIzena);                // --- TALDE OBJEKTUA (10 parametro) ---
                 Taldea taldeBerria = new Taldea(
                     tIzena,                                // izena
                     rs.getString("Sorrera_Data"),          // sorreraUrtea

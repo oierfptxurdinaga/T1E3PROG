@@ -59,14 +59,13 @@ public class PartiduaDao {
     }
 
     public void modifyPartiduaEtaJaurdunaldi(int idPar, int resLoc, int resVis, String irabazlea, String galtzailea) {
-        // Lehenengo SQL: Puntuak eguneratu partiduak taulan
         String sqlPartidua = "UPDATE partiduak SET Result_Lok = ?, Result_Bis = ? WHERE Id_Par = ?";
-        
-        // Bigarren SQL: Irabazlea/Galtzailea eguneratu jaurdunaldia taulan
         String sqlJaurdu = "UPDATE jaurdunaldia SET Talde_Irabazlea = ?, Talde_Galdu = ? WHERE Id_Par = ?";
 
+        // TRY-WITH-RESOURCES erabili konexioa automatikoki itxi eta gordetzeko
         try (Connection kon = db.konektatu()) {
-            // Partidua taula eguneratu
+            kon.setAutoCommit(true); // Ziurtatu aldaketa bakoitza berehala gordetzen dela
+
             try (PreparedStatement ps1 = kon.prepareStatement(sqlPartidua)) {
                 ps1.setInt(1, resLoc);
                 ps1.setInt(2, resVis);
@@ -74,16 +73,15 @@ public class PartiduaDao {
                 ps1.executeUpdate();
             }
 
-            // Jaurdunaldia taula eguneratu
             try (PreparedStatement ps2 = kon.prepareStatement(sqlJaurdu)) {
                 ps2.setString(1, irabazlea);
                 ps2.setString(2, galtzailea);
                 ps2.setInt(3, idPar);
                 ps2.executeUpdate();
             }
-            
+            System.out.println("DB Partidua eta Jaurdunaldia OK: ID " + idPar);
         } catch (Exception e) {
-            System.out.println("Errorea Modify egitean: " + e.getMessage());
+            e.printStackTrace(); // Errore zehatza kontsolan ikusteko
         }
     }
     public static void eguneratuPartiduakGuztiak(ArrayList<Partidua> partiduakMasterList) {

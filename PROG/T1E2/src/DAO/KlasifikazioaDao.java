@@ -25,6 +25,7 @@ public class KlasifikazioaDao {
             ps.setString(6, t.getIzena()); // Hemen bilatzen du zein talde aldatu
 
             int filas = ps.executeUpdate();
+            System.out.println("Taldea: " + t.getIzena() + " | Aldatutako lerroak: " + filas);
             
             if (filas == 0) {
                 System.out.println("Abisua: Ez da talderik aurkitu izen honekin: " + t.getIzena());

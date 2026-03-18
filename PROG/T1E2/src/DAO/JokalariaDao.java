@@ -16,33 +16,22 @@ public class JokalariaDao {
      * Jokalari baten partida guztien laburpena lortzen du, 
      * estatistikak eta partiden datuak uztartuz.
      */
-    public ArrayList<Jokalaria> kargatuJokalariak() {
+    public ArrayList<Jokalaria> kargatuJokalariakTaldeka(String taldeIzena) {
         ArrayList<Jokalaria> lista = new ArrayList<>();
-        
-        // SQL JOIN: Partidak eta estatistikak taulak lotzen ditugu ID bidez
-        String sql = "SELECT j.NAN, j.Jok_Izena, j.Jok_Abizena, j.Jaio_Data, j.Merka_Prezioa, j.Talde_Izena, j.Posizioa " +
-                     "FROM jokalariak j";
-
+        String sql = "SELECT * FROM jokalariak WHERE Talde_Izena = ?";
         try (Connection kon = db.konektatu();
              PreparedStatement pstmt = kon.prepareStatement(sql)) {
-                      
+            pstmt.setString(1, taldeIzena);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    // Laburpena objektu berria sortu lerro bakoitzeko
-                    Jokalaria lab = new Jokalaria(
-                    		rs.getString("Jok_Izena"),
-                    		rs.getString("Jok_Abizena"),
-                    		rs.getString("Jaio_Data"),
-                    		rs.getString("NAN"),
-                            rs.getString("Talde_Izena"),
-                            rs.getInt("Merka_Prezioa") );
-                    lista.add(lab);
+                    lista.add(new Jokalaria(
+                        rs.getString("Jok_Izena"), rs.getString("Jok_Abizena"),
+                        rs.getString("Jaio_Data"), rs.getString("NAN"),
+                        rs.getString("Talde_Izena"), rs.getInt("Merka_Prezioa")
+                    ));
                 }
             }
-        } catch (SQLException e) {
-            System.out.println("Errorea laburpena kargatzerakoan: " + e.getMessage());
-        }
-        
+        } catch (SQLException e) { System.out.println(e.getMessage()); }
         return lista;
     }
 }
