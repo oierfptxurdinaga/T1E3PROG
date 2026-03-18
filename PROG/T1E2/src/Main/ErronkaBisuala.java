@@ -14,8 +14,8 @@ import Metodoak.Metodoak;
 public class ErronkaBisuala extends JFrame implements ActionListener {
 
     // --- Atributuak ---
-    private CardLayout cardLayout;
-    private JPanel contentPanel;
+    private CardLayout cardLayout; // Panelen artean aldatzeko diseinu kudeatzailea
+    private JPanel contentPanel; // Panel guztiak gordetzen dituen edukiontzi nagusia
     private Font titleFont;
 
     // --- Panelen Osagaiak ---
@@ -25,28 +25,28 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
     private JLabel logoaImg1, erabiltzaileak, pasahitza;
     private JTextField textErabiltzaile;
     private JPasswordField textPasahitza;
-    private JButton sartu, ateraLogin; // ALDATUTA: Izena zehaztu
+    private JButton sartu, ateraLogin; 
 
     // Hasiera
     private JLabel logoaImg2, img1, img2;
-    private JButton atzerantzHasiera, ateraHasiera, klasifikazioaIkusi, sartuEmaitza, taldeakIkusi, jokalariakAldatu; // ALDATUTA: Izena zehaztu
+    private JButton atzerantzHasiera, ateraHasiera, klasifikazioaIkusi, sartuEmaitza, taldeakIkusi, jokalariakAldatu; 
 
     // Klasifikazioa
     private JTable tablaKlasif;
     private DefaultTableModel modeloTabla;
     private JScrollPane scrollTabla;
-    private JButton atzerantzKlasif, ateraKlasif; // ALDATUTA: Izena zehaztu
+    private JButton atzerantzKlasif, ateraKlasif; 
 
     // Taldeak Ikusi
     private JComboBox<String> comboBox;
     private JTable tablaPequena;
     private JTable tablaGrande;
-    private JButton atzerantzTaldeak, ateraTaldeak; // GEHITUTA
+    private JButton atzerantzTaldeak, ateraTaldeak; 
     
     // Emaitza
     private JTable tablaEmaitzak;
     private DefaultTableModel modeloEmaitzak;
-    private JButton gordeEmaitza, atzerantzEmaitza, ateraEmaitza; // ALDATUTA: Izena zehaztu
+    private JButton gordeEmaitza, atzerantzEmaitza, ateraEmaitza; 
 
     public ErronkaBisuala() {
         // --- JFrame Konfigurazioa ---
@@ -55,11 +55,14 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         setSize(1000, 700);
         setLocationRelativeTo(null);
         titleFont = new Font("Verdana", Font.BOLD, 24);
-     // --- Panelak Inizializatu ---
+
+        // --- Panelak Inizializatu ---
+        // GARRANTZITSUA: Panelak sortu behar dira datuak kargatu baino lehen, NullPointerException saihesteko
         inizializatuPanelak();
         konfiguratuOsagaiBisualak();
 
         // --- Datuak Kargatu ---
+        // Behin modeloEmaitzak inizializatuta dagoela, datu-baseko informazioarekin betetzen dugu
         Metodoak.beteEmaitzenTaula(modeloEmaitzak);
 
         // --- Layout Konfigurazioa ---
@@ -67,8 +70,8 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         contentPanel = new JPanel(cardLayout);
         setContentPane(contentPanel);
 
-        
         // --- Gehitu Panelak ---
+        // Panel bakoitzari izen bat (String) ematen zaio cardLayout-arekin deitzeko
         contentPanel.add(LoginPanela, "Login");
         contentPanel.add(HasierakoPanela, "Hasiera");
         contentPanel.add(KlasifikazioaPanela, "Klasifikazioa");
@@ -76,7 +79,7 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         contentPanel.add(TaldeakPanela, "Taldeak");
         contentPanel.add(JokalariakPanela, "Jokalariak");
         
-        // Leihoaren "X" botoia
+        // Leihoaren "X" botoia kudeatzeko (segurtasun mezua erakusteko atera aurretik)
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -111,6 +114,7 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         sartu = new JButton("Sartu");
         sartu.setBounds(483, 447, 100, 30);
         sartu.addActionListener(this);
+        // "Enter" sakatzean automatikoki "Sartu" botoia aktibatzeko
         this.getRootPane().setDefaultButton(sartu);
         
         ateraLogin = new JButton("Atera");
@@ -178,16 +182,15 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         // --- JOKALARIAK ALDATU PANELA ---
         JokalariakPanela = new JPanel(null);
         JokalariakPanela.setPreferredSize(new Dimension(1000, 600));
-        // ... (Zure jokalariakAldatu logic mantendu dugu)
         JLabel titleJokalariak = new JLabel("JOKALARIAK ALDATU", JLabel.CENTER);
         titleJokalariak.setFont(titleFont);
         titleJokalariak.setBounds(50, 20, 900, 30);
         JokalariakPanela.add(titleJokalariak);
-        // ... (Zure jokalarien taula eta comboBox-ak hemen joango lirateke berdin)
 
         // --- TALDEAK PANELA ---
         TaldeakPanela = new JPanel(null);
         comboBox = new JComboBox<>();
+        // ComboBox-a betetzen dugu kargatuta dauden taldeekin
         for (Taldea t : Metodoak.taldeakMasterList) { comboBox.addItem(t.getIzena()); }
         comboBox.setBounds(400, 10, 200, 25);
         comboBox.addActionListener(this);
@@ -221,13 +224,22 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         titleEmaitza.setBounds(50, 20, 900, 30);
         titleEmaitza.setFont(titleFont);
 
-        modeloEmaitzak = new DefaultTableModel(new String[]{"Jornada / Partidua", "Puntuak", "vs", "Puntuak", "Kanpoko Taldea"}, 0) {
-            @Override public boolean isCellEditable(int row, int col) { return (col == 1 || col == 3); }
+        // TableModel pertsonalizatua: puntuazioak (1 eta 3 zutabeak) bakarrik editatu ahal izateko
+        modeloEmaitzak = new DefaultTableModel(new String[]{"Jornada / Partidua", "Puntuak", "vs", "Puntuak", "Kanpoko Taldea", "ID_OCULTO"}, 0) {
+            @Override 
+            public boolean isCellEditable(int row, int col) { 
+                return (col == 1 || col == 3); 
+            }
         };
-
+        
         tablaEmaitzak = new JTable(modeloEmaitzak);
         JScrollPane scrollEmaitzak = new JScrollPane(tablaEmaitzak);
         scrollEmaitzak.setBounds(50, 80, 900, 400);
+
+        // ID_OCULTO zutabea (5. indexua) ezkutatzeko, erabiltzaileak ikusi ez dezan baina guk datu-baserako erabili
+        tablaEmaitzak.getColumnModel().getColumn(5).setMinWidth(0);
+        tablaEmaitzak.getColumnModel().getColumn(5).setMaxWidth(0);
+        tablaEmaitzak.getColumnModel().getColumn(5).setPreferredWidth(0);
 
         atzerantzEmaitza = new JButton("Atzerantz"); 
         atzerantzEmaitza.setBounds(50, 520, 100, 30);
@@ -251,10 +263,11 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 
         // --- LOGIN EKINTZAK ---
         if (src == sartu) {
+            // Pasahitza JPasswordField-etik lortu eta login metodoari pasatu
             String rola = Metodoak.login(textErabiltzaile.getText(), new String(textPasahitza.getPassword()));
             if (rola != null) {
                 textErabiltzaile.setText(""); textPasahitza.setText("");
-                erakutsiPanelak(rola);
+                erakutsiPanelak(rola); // Rolaren arabera botoiak ezkutatu edo erakutsi
                 cardLayout.show(contentPanel, "Hasiera");
             } else {
                 JOptionPane.showMessageDialog(null, "Erabiltzaile edo Pasahitz okerra");
@@ -284,9 +297,11 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
             cardLayout.show(contentPanel, "Jokalariak");
         }
         else if (src == gordeEmaitza) {
-            prozesatuEmaitzak();
+            // Taulan sartutako puntuazioak datu-basera pasatzeko metodoa
+Metodoak.gordeDatuak();            
         }
         else if (src == comboBox) {
+            // ComboBox-ean talde bat aukeratzean taulak eguneratu
             String seleccionado = (String) comboBox.getSelectedItem();
             Metodoak.actualizarTablasTaldeak(seleccionado, tablaPequena, tablaGrande);
         }
@@ -294,6 +309,7 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 
     // --- Metodo Erabilgarriak (LOGIKA) ---
     private void erakutsiPanelak(String rola) {
+        // ADMIN bada "Sartu Emaitza" ikusiko du, Presidentea bada "Jokalariak Aldatu"
         klasifikazioaIkusi.setVisible(true);
         taldeakIkusi.setVisible(true);
         sartuEmaitza.setVisible(rola.equals("Admin"));
@@ -308,6 +324,7 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
     }
 
     private void kargatuIrudia(JLabel label, int w, int h, String path) {
+        // Irudiak Multimedia karpetatik kargatzeko eta tamainara egokitzeko metodoa
         try {
             java.net.URL url = getClass().getResource(path);
             if (url != null) {
@@ -318,12 +335,30 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
         } catch (Exception e) { label.setText("Error"); }
     }
 
-    // (Hemen itsatsi zure eguneratuKlasifikazioa, generatuJornadak eta prozesatuEmaitzak metodoak osorik)
-    private void eguneratuKlasifikazioa() { /* ... zure kodea ... */ }
+    private void eguneratuKlasifikazioa() {
+        // 1. Kalkulatu logikan
+        Metodoak.kalkulatuKlasifikazioa();
+        
+        // 2. Taula garbitu
+        modeloTabla.setRowCount(0);
+        
+        // 3. Ordenatutako zerrenda taulara pasatu
+        for (Taldea t : Metodoak.taldeakMasterList) {
+            Object[] fila = {
+                t.getIzena(),
+                t.getPuntuTotalak(),
+                t.getIrabazitakoak(),
+                t.getGaldutakoak(),
+                t.getPuntuakF(),
+                t.getPuntuakC()
+            };
+            modeloTabla.addRow(fila);
+        }
+    }
     private void generatuJornadak() { /* ... zure kodea ... */ }
-    private void prozesatuEmaitzak() { /* ... zure kodea ... */ }
 
     public static void main(String[] args) {
+        // GUI-a hari (thread) seguru baten exekutatzeko
         EventQueue.invokeLater(() -> {
             new ErronkaBisuala();
         });
