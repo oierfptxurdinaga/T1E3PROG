@@ -5,20 +5,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.swing.table.DefaultTableModel;
 
 import E2.*;
 import Metodoak.Metodoak;
 
-class MetodoakTestak {
+class Metodoak2Test {
 
-    private Taldea t1;
-    private Taldea t2;
-    private Partidua p1;
-    private Partidua p2;
+    private Taldea t1, t2;
+    private Partidua p1, p2;
 
     @BeforeEach
     void setUp() {
@@ -34,7 +33,7 @@ class MetodoakTestak {
         p1 = new Partidua(1, "TaldeA", "TaldeB", 3, 1, null, null);
         p2 = new Partidua(2, "TaldeB", "TaldeA", 2, 2, null, null);
 
-        // Limpiar y poblar listas maestras
+        // Poblar listas maestras
         Metodoak.taldeakMasterList.clear();
         Metodoak.partiduakMasterList.clear();
         Metodoak.taldeakMasterList.addAll(Arrays.asList(t1, t2));
@@ -42,8 +41,7 @@ class MetodoakTestak {
     }
 
     @Test
-    void testLogin() {
-        // Debe cargar usuarios y devolver permisos
+    void testLoginUsuarios() {
         String permiso = Metodoak.login("ebilbao", "12345");
         assertEquals("Admin", permiso);
 
@@ -51,9 +49,9 @@ class MetodoakTestak {
         assertEquals("Presidentea", permiso);
 
         permiso = Metodoak.login("kmunoz", "12345");
-        assertEquals("ErabiltzaileNormala", permiso); // suponiendo que ErabiltzaileNormala.baimenak() devuelve esto
+        assertEquals("ErabiltzaileNormala", permiso);
 
-        permiso = Metodoak.login("usuarioInexistente", "000");
+        permiso = Metodoak.login("inexistente", "000");
         assertNull(permiso);
     }
 
@@ -61,19 +59,18 @@ class MetodoakTestak {
     void testKalkulatuKlasifikazioa() {
         Metodoak.kalkulatuKlasifikazioa();
 
-        // Después del cálculo
-        assertEquals(4, t1.getPuntuTotalak()); // t1 gana 3-1 y empata 2-2: 2 + 2 = 4
-        assertEquals(2, t1.getIrabazitakoak()); 
-        assertEquals(1, t1.getGaldutakoak()); 
+        // Verificar puntos y victorias después del cálculo
+        assertEquals(4, t1.getPuntuTotalak());
+        assertEquals(2, t1.getIrabazitakoak());
+        assertEquals(1, t1.getGaldutakoak());
 
-        assertEquals(2, t2.getPuntuTotalak()); // t2 pierde 3-1 y empata 2-2: 0 + 2 = 2
+        assertEquals(2, t2.getPuntuTotalak());
         assertEquals(1, t2.getIrabazitakoak());
         assertEquals(2, t2.getGaldutakoak());
     }
 
     @Test
     void testProzesatuEmaitzak() {
-        // Creamos un modelo simulado
         DefaultTableModel modelo = new DefaultTableModel();
         modelo.addColumn("Local");
         modelo.addColumn("PuntosL");
@@ -82,15 +79,32 @@ class MetodoakTestak {
         modelo.addColumn("Visitante");
         modelo.addColumn("ID");
 
-        modelo.addRow(new Object[]{"TaldeA", 5, "vs", 2, "TaldeB", 1}); // p1
-        modelo.addRow(new Object[]{"TaldeB", 1, "vs", 3, "TaldeA", 2}); // p2
+        // Fila válida
+        modelo.addRow(new Object[]{"TaldeA", 5, "vs", 2, "TaldeB", 1});
+        // Fila con error (string en lugar de número)
+        modelo.addRow(new Object[]{"TaldeB", "abc", "vs", 2, "TaldeA", 2});
 
         Metodoak.prozesatuEmaitzak(modelo);
 
         assertEquals(5, Metodoak.partiduakMasterList.get(0).getResultLokala());
         assertEquals(2, Metodoak.partiduakMasterList.get(0).getResulBisitari());
+    }
 
-        assertEquals(1, Metodoak.partiduakMasterList.get(1).getResultLokala());
-        assertEquals(3, Metodoak.partiduakMasterList.get(1).getResulBisitari());
+    @Test
+    void testActualizarTablasTaldeak() {
+        DefaultTableModel modeloPeq = new DefaultTableModel();
+        DefaultTableModel modeloGrande = new DefaultTableModel();
+
+        JTable tablaPeq = new JTable(modeloPeq);
+        JTable tablaGrande = new JTable(modeloGrande);
+
+        // Llamamos al método con equipo válido
+        assertDoesNotThrow(() -> Metodoak.actualizarTablasTaldeak("TaldeA", tablaPeq, tablaGrande));
+
+        // Llamamos al método con null (no lanza excepción)
+        assertDoesNotThrow(() -> Metodoak.actualizarTablasTaldeak(null, tablaPeq, tablaGrande));
+
+        // Llamamos al método con equipo que no existe
+        assertDoesNotThrow(() -> Metodoak.actualizarTablasTaldeak("EquipoX", tablaPeq, tablaGrande));
     }
 }
