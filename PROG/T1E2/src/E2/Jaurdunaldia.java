@@ -1,38 +1,38 @@
 package E2;
 
 import java.util.ArrayList;
-/**
- * Jaurdunaldia klaseak ligako jardunaldi bat irudikatzen du.
- * <p>
- * Jardunaldi batek partida multzo bat biltzen du, eta normalean
- * denboraldi baten barruan kokatzen da.
- * </p>
- *
- * <p>
- * Klase hau {@link Denboraldia} klasearekin erlazionatuta dago,
- * denboraldiko jardunaldiak antolatzeko erabiltzen baita.
- * </p>
- *
- * @author ZureIzena
- * @version 1.0
- */
+import jakarta.xml.bind.annotation.*;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Jaurdunaldia {
-    private int idPar;
-    private int idJaurdu;
-    private String taldeIrabazlea;
-    private String taldeGaldu;
+	private int idPar;
+	private int idJaurdu;
+	private String taldeIrabazlea;
+	private String taldeGaldu;
 
-    public Jaurdunaldia(int idPar, int idJaurdu, String taldeIrabazlea, String taldeGaldu) {
-        this.idPar = idPar;
-        this.idJaurdu = idJaurdu;
-        this.taldeIrabazlea = taldeIrabazlea;
-        this.taldeGaldu = taldeGaldu;
-    }
+	@XmlElement(name = "partidua")
+	private ArrayList<Partidua> partiduak = new ArrayList<>();
 
-    // Getters
-    
-    public int getIdJaurdu() { return idJaurdu; }
-    public int getIdPar() {
+	public void setPartiduak(ArrayList<Partidua> partiduak) {
+		this.partiduak = partiduak;
+	}
+
+	public Jaurdunaldia() {
+	}
+
+	public Jaurdunaldia(int idPar, int idJaurdu, String taldeIrabazlea, String taldeGaldu) {
+		this.idPar = idPar;
+		this.idJaurdu = idJaurdu;
+		this.taldeIrabazlea = taldeIrabazlea;
+		this.taldeGaldu = taldeGaldu;
+	}
+
+	// Getters eta Setters
+	public int getIdJaurdu() {
+		return idJaurdu;
+	}
+
+	public int getIdPar() {
 		return idPar;
 	}
 
@@ -40,6 +40,11 @@ public class Jaurdunaldia {
 		this.idPar = idPar;
 	}
 
-	public String getTaldeIrabazlea() { return taldeIrabazlea != null ? taldeIrabazlea : "---"; }
-    public String getTaldeGaldu() { return taldeGaldu != null ? taldeGaldu : "---"; }
+	public String getTaldeIrabazlea() {
+		return taldeIrabazlea != null ? taldeIrabazlea : "---";
+	}
+
+	public String getTaldeGaldu() {
+		return taldeGaldu != null ? taldeGaldu : "---";
+	}
 }

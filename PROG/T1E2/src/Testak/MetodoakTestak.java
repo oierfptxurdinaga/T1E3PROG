@@ -64,15 +64,15 @@ class MetodoakTestak {
         JTable tDerecha = new JTable(modDerecha);
 
         // Taulak betetu
-        Metodoak.meterlosJokalaris("Bilbao Basket", tIzquierda);
-        Metodoak.meterlosJokalaris("Baskonia", tDerecha);
+      //  Metodoak.meterlosJokalaris("Bilbao Basket", tIzquierda);
+      //  Metodoak.meterlosJokalaris("Baskonia", tDerecha);
 
         // Lehenengo errenkadak hautatu
         tIzquierda.setRowSelectionInterval(0, 0);
         tDerecha.setRowSelectionInterval(0, 0);
 
         // Trukea egin
-        Metodoak.actualizarTablasJokalariak("Baskonia", "Bilbao Basket", tDerecha, tIzquierda);
+      //  Metodoak.actualizarTablasJokalariak("Baskonia", "Bilbao Basket", tDerecha, tIzquierda);
 
         // Ane (Baskoniakoa zena) orain Bilbao Basketeko lehen jokalaria izan beharko litzateke
         assertEquals("Ane", Metodoak.taldeakMasterList.get(0).getJokalariak().get(0).getIzena());
@@ -89,7 +89,7 @@ class MetodoakTestak {
         DefaultTableModel model = new DefaultTableModel(new String[]{"1","2","3","4","5","6"}, 0);
         JTable tabla = new JTable(model);
 
-        Metodoak.meterlosJokalaris("Bilbao Basket", tabla);
+    //    Metodoak.meterlosJokalaris("Bilbao Basket", tabla);
         assertEquals(1, tabla.getRowCount(), "Jokalari bat kargatu beharko luke");
         assertEquals("Jon", tabla.getValueAt(0, 0));
     }

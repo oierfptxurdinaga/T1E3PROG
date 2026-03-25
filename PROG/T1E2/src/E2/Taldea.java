@@ -3,6 +3,10 @@ package E2;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
 /**
  * Taldea klaseak saskibaloi talde bat irudikatzen du.
  * <p>
@@ -22,6 +26,7 @@ import java.util.Arrays;
  * @author ZureIzena
  * @version 1.0
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Taldea implements Serializable {
     private static final long serialVersionUID = 1L;
 	
@@ -34,8 +39,12 @@ public class Taldea implements Serializable {
 	private int PuntuTotalak;
 	private int Irabazitakoak;
 	private int Galdutakoak;
+	
+	@XmlElementWrapper(name = "jokalariak")
+	@XmlElement(name = "jokalaria")
 	private ArrayList<Jokalaria> Jokalariak;
 	
+	public Taldea() {}
 	public Taldea(String izena,  String sorreraUrtea, String lehendakari, int n_Bazkideak, int puntuakF,
 			int puntuakC, int puntuTotalak, int irabazitakoak, int galdutakoak, ArrayList<Jokalaria> jokalariak) {
 		super();
@@ -128,15 +137,7 @@ public class Taldea implements Serializable {
 	}
 	@Override
 	public String toString() {
-	    String texto = "=== " + Izena + " ===\n";
-	    texto += "Lehendakari: " + Lehendakari + "\n";
-	    texto += "Sorrera Urtea: " + SorreraUrtea + "\n";
-	    texto += "Baskide Kopurua: " + N_Bazkideak + "\n";
-	    texto += "Jokalariak:\n";
-	    for (Jokalaria j : Jokalariak) {
-	        texto += "  - " + j + "\n"; // usa el toString() de Jokalaria
-	    }
-	    texto += "\n";
+	    String texto = Izena;
 	    return texto;
 	}
 }

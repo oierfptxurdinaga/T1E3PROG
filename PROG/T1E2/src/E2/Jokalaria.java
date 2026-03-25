@@ -2,12 +2,17 @@ package E2;
 
 import java.io.Serializable;
 import java.util.Objects;
+import javax.persistence.Entity; 
+import javax.persistence.Id;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+
 /**
  * Jokalaria klaseak ligako jokalari bat irudikatzen du.
  * <p>
- * Klase honek {@link Serializable} interfazea inplementatzen du,
- * jokalarien datuak fitxategietan gorde ahal izateko, eta
- * {@link Comparable} interfazea ere bai, jokalariak ordenatzeko.
+ * Klase honek {@link Serializable} interfazea inplementatzen du, jokalarien
+ * datuak fitxategietan gorde ahal izateko, eta {@link Comparable} interfazea
+ * ere bai, jokalariak ordenatzeko.
  * </p>
  *
  * <p>
@@ -17,18 +22,21 @@ import java.util.Objects;
  * @author ZureIzena
  * @version 1.0
  */
+@XmlAccessorType(XmlAccessType.FIELD)
+@Entity
 public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 	private static final long serialVersionUID = 1L;
-	
-	
+
 	private String Izena;
 	private String Abizena;
 	private String JaiotzeData;
+	@Id
 	private String NAN;
 	private String Taldea;
 	private int Prezioa;
 	private int JokalarienPuntuak;
-
+	
+	public Jokalaria() {} 
 	
 	public Jokalaria(String izena, String abizena, String jaiotzeData, String nAN, String taldea, int prezioa) {
 		super();
@@ -39,14 +47,15 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 		Taldea = taldea;
 		Prezioa = prezioa;
 	}
+
 	public Jokalaria(Jokalaria besteJokalariBat) {
-	    super();
-	    this.Izena = besteJokalariBat.Izena;
-	    this.Abizena = besteJokalariBat.Abizena;
-	    this.JaiotzeData = besteJokalariBat.JaiotzeData;
-	    this.NAN = besteJokalariBat.NAN;
-	    this.Taldea = besteJokalariBat.Taldea;
-	    this.Prezioa = besteJokalariBat.Prezioa;
+		super();
+		this.Izena = besteJokalariBat.Izena;
+		this.Abizena = besteJokalariBat.Abizena;
+		this.JaiotzeData = besteJokalariBat.JaiotzeData;
+		this.NAN = besteJokalariBat.NAN;
+		this.Taldea = besteJokalariBat.Taldea;
+		this.Prezioa = besteJokalariBat.Prezioa;
 	}
 
 	public String getIzena() {
@@ -88,22 +97,25 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 	public String getNAN() {
 		return NAN;
 	}
+
 	@Override
 	public int compareTo(Jokalaria besteJokalaria) {
-	    // Primero comparamos por Apellido (Abizena)
-	    int resultado = this.Abizena.compareToIgnoreCase(besteJokalaria.getAbizena());
-	    
-	    // Si los apellidos son iguales, comparamos por Nombre (Izena)
-	    if (resultado == 0) {
-	        resultado = this.Izena.compareToIgnoreCase(besteJokalaria.getIzena());
-	    }
-	    
-	    return resultado;
+		// Primero comparamos por Apellido (Abizena)
+		int resultado = this.Abizena.compareToIgnoreCase(besteJokalaria.getAbizena());
+
+		// Si los apellidos son iguales, comparamos por Nombre (Izena)
+		if (resultado == 0) {
+			resultado = this.Izena.compareToIgnoreCase(besteJokalaria.getIzena());
+		}
+
+		return resultado;
 	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(Abizena, Izena);
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -115,5 +127,9 @@ public class Jokalaria implements Serializable, Comparable<Jokalaria> {
 		Jokalaria other = (Jokalaria) obj;
 		return Objects.equals(Abizena, other.Abizena) && Objects.equals(Izena, other.Izena);
 	}
-	
+
+	@Override
+	public String toString() {
+		return Izena + " " + Abizena + " [" + NAN + "]";
+	}
 }

@@ -1,51 +1,37 @@
 package E2;
 
 import java.util.ArrayList;
-/**
- * Denboraldia klaseak ligako denboraldi bat irudikatzen du.
- * <p>
- * Denboraldi batek honako informazioa biltzen du:
- * </p>
- * <ul>
- *   <li>Denboraldiaren data edo identifikatzailea</li>
- *   <li>Jardunaldi guztien zerrenda</li>
- *   <li>Denboraldi osoko puntuazioen zerrenda</li>
- * </ul>
- *
- * <p>
- * Klase hau ligaren egitura modelatzeko erabiltzen da.
- * </p>
- *
- * @author ZureIzena
- * @version 1.0
- */
+import jakarta.xml.bind.annotation.*;
+
+@XmlRootElement(name = "denboraldia")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Denboraldia {
+
 	private String Data;
-	private ArrayList<Jaurdunaldia> Denboraldia;
+	private ArrayList<Jaurdunaldia> Jaurdunaldiak;
 	private ArrayList<Puntuazioa> DenboraldiaP;
-	public Denboraldia(String data, ArrayList<Jaurdunaldia> denboraldia, ArrayList<Puntuazioa> denboraldiaP) {
+
+    @XmlElementWrapper(name = "taldeak")
+    @XmlElement(name = "taldea")
+    private ArrayList<Taldea> taldeak; 
+
+    public Denboraldia() {
+    }
+
+	public Denboraldia(String data, ArrayList<Jaurdunaldia> jaurdunaldia, ArrayList<Puntuazioa> denboraldiaP) {
 		super();
 		Data = data;
-		Denboraldia = denboraldia;
+		Jaurdunaldiak = jaurdunaldia;
 		DenboraldiaP = denboraldiaP;
 	}
-	
-	public String getData() {
-		return Data;
-	}
-	public void setData(String data) {
-		Data = data;
-	}
-	public ArrayList<Jaurdunaldia> getDenboraldia() {
-		return Denboraldia;
-	}
-	public void setDenboraldia(ArrayList<Jaurdunaldia> denboraldia) {
-		Denboraldia = denboraldia;
-	}
-	public ArrayList<Puntuazioa> getDenboraldiaP() {
-		return DenboraldiaP;
-	}
-	public void setDenboraldiaP(ArrayList<Puntuazioa> denboraldiaP) {
-		DenboraldiaP = denboraldiaP;
-	}
+
+    // Getters eta setters
+	public String getData() { return Data; }
+	public void setData(String data) { Data = data; }
+	public ArrayList<Jaurdunaldia> getDenboraldia() { return Jaurdunaldiak; }
+	public void setDenboraldia(ArrayList<Jaurdunaldia> jaurdunaldia) { Jaurdunaldiak = jaurdunaldia; }
+	public ArrayList<Puntuazioa> getDenboraldiaP() { return DenboraldiaP; }
+	public void setDenboraldiaP(ArrayList<Puntuazioa> denboraldiaP) { DenboraldiaP = denboraldiaP; }
+	public ArrayList<Taldea> getTaldeak() { return taldeak; }
+	public void setTaldeak(ArrayList<Taldea> taldeak) { this.taldeak = taldeak; }
 }
