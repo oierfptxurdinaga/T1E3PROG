@@ -249,33 +249,42 @@ public class Metodoak {
 		}
 	}
 
+	/**
+	 * Hautatutako taldearen informazio orokorra eta bere jokalariak tauletan
+	 * kargatzen ditu. * @param aukeratuta ComboBox-ean hautatutako taldearen izena.
+	 * 
+	 * @param tablaPequena Goiko taula (Sorrera, Lehendakari eta Bazkide kopurua).
+	 * @param tablaGrande  Beheko taula (Jokalarien zerrenda osoa).
+	 */
 	public static void actualizarTablasTaldeak(String aukeratuta, JTable tablaPequena, JTable tablaGrande) {
-		// Ziurtatu hautatutako taldearen izena ez dela null
+		// Ziurtatu hautaketa ez dela null erroreak saihesteko
 		if (aukeratuta == null)
 			return;
+
 		Taldea t = null;
-		// MasterList zerrendan bilatu hautatutako izenarekin bat datorren Taldea
-		// objektua
+		// MasterList-ean bilatu izen bera duen taldea objektu osoa lortzeko
 		for (Taldea taldea : taldeakMasterList) {
 			if (taldea.getIzena().equals(aukeratuta)) {
 				t = taldea;
 				break;
 			}
 		}
+
 		if (t != null) {
-			// Taldeko jokalariak alfabetikoki edo ezarritako irizpidearen arabera ordenatu
-			Collections.sort(t.getJokalariak());
-			// 1. TAULA (Txikia): Taldearen datu orokorrak eta estatistikak eguneratu
+			// GOIKO TAULA TXIKIA: Taldearen datu administratiboak
 			DefaultTableModel modeloPequena = (DefaultTableModel) tablaPequena.getModel();
-			modeloPequena.setRowCount(0); // Taula hustu datu berriak sartu aurretik
-			modeloPequena.addRow(new Object[] { t.getIzena(), t.getSorreraUrtea(), t.getLehendakari(),
-					t.getN_Bazkideak(), t.getPuntuakF(), t.getPuntuakC(), t.getPuntuTotalak(), t.getIrabazitakoak(),
-					t.getGaldutakoak(), t.getJokalariak().size() // Jokalari kopurua kalkulatu
-			});
-			// 2. TAULA (Handia): Talde horretako jokalari guztien zerrenda kargatu
+			modeloPequena.setRowCount(0); // Taula garbitu informazio zaharra kentzeko
+			// Taldea klaseko getter-ak erabili: SorreraUrtea, Lehendakari eta N_Bazkideak
+			// Oharra: Datu hauek 0 edo hutsik badatoz, TaldeDao-n karga zuzendu behar da
+			Object[] filaTaldea = { t.getSorreraUrtea(), t.getLehendakari(), t.getN_Bazkideak() };
+			modeloPequena.addRow(filaTaldea);
+			// BEHEKO TAULA HANDIA: Jokalarien zerrenda eguneratua (MySQL-tik)
+			DAO.JokalariaDao jDao = new DAO.JokalariaDao();
+			ArrayList<Jokalaria> jokalariak = jDao.kargatuJokalariakTaldeka(aukeratuta);
 			DefaultTableModel modeloGrande = (DefaultTableModel) tablaGrande.getModel();
-			modeloGrande.setRowCount(0); // Taula garbitu
-			for (Jokalaria j : t.getJokalariak()) {
+			modeloGrande.setRowCount(0); // Jokalarien taula garbitu
+			for (Jokalaria j : jokalariak) {
+				// Jokalari bakoitzaren lerroa gehitu (Izena, Abizena, Jaiotza...)
 				modeloGrande.addRow(new Object[] { j.getIzena(), j.getAbizena(), j.getJaiotzeData(), j.getNAN(),
 						t.getIzena(), j.getPrezioa() });
 			}

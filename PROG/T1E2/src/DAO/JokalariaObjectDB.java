@@ -1,83 +1,80 @@
 package DAO;
 
-import javax.persistence.*;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import E2.Jokalaria;
+import DB.ConexionDB;
 
 public class JokalariaObjectDB {
 
-	// Fitxategia proiektuaren karpetan sortuko da
-	private static final String URL = "jokalariak.odb";
-	private EntityManagerFactory emf;
+	private ConexionDB konexioa;
 
 	public JokalariaObjectDB() {
-		this.emf = Persistence.createEntityManagerFactory(URL);
+		this.konexioa = new ConexionDB();
 	}
 
-	// Taldeko jokalari bat aldatu eta BDOO eguneratu
 	public boolean aldatuTaldea(String nan, String taldeBerria) {
-		// EntityManager bat sortu datu-basearekin eragiketak kudeatzeko
-		EntityManager em = emf.createEntityManager();
-		try {
-			// Transakzioa hasi: aldaketak seguruak izateko eta datu-basean finkatzeko
-			em.getTransaction().begin();
-			// Jokalaria bilatu datu-basean bere NAN (Primary Key) erabiliz
-			Jokalaria j = em.find(Jokalaria.class, nan);
-			// Jokalaria existitzen bada, bere taldea aldatu eta transakzioa onartu (commit)
-			if (j != null) {
-				j.setTaldea(taldeBerria); // Objektuaren egoera eguneratu
-				em.getTransaction().commit(); // Aldaketak datu-basean gorde
-				return true;
-			}
+		// En tu SQL la columna se llama 'Talde_Izena'
+		String sql = "UPDATE jokalariak SET Talde_Izena = ? WHERE NAN = ?";
+
+		try (Connection kon = konexioa.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
+
+			pstmt.setString(1, taldeBerria);
+			pstmt.setString(2, nan);
+
+			return pstmt.executeUpdate() > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
 			return false;
-		} finally {
-			em.close();
 		}
 	}
 
-	// Talde bateko jokalariak .odb fitxategitik lortu
 	public List<Jokalaria> getJokalariakTaldeka(String taldeIzena) {
-		// Datu-basearekin komunikatzeko entitate-kudeatzailea sortu
-		EntityManager em = emf.createEntityManager();
-		try {
-			// JPQL bidezko kontsulta prestatu: 'Jokalaria' klaseko objektuak bilatzen ditu
-			// taldearen arabera
-			TypedQuery<Jokalaria> query = em.createQuery("SELECT j FROM Jokalaria j WHERE j.Taldea = :t",
-					Jokalaria.class);
+		List<Jokalaria> lista = new ArrayList<>();
+		String sql = "SELECT * FROM jokalariak WHERE Talde_Izena = ?";
 
-			// ':t' parametroa metodoari pasatako 'taldeIzena' balioarekin ordezkatu eta
-			// zerrenda lortu
-			return query.setParameter("t", taldeIzena).getResultList();
-		} finally {
-			em.close();
-		}
-	}
+		try (Connection kon = konexioa.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
 
-	// MySQL erreproduzitzaile guztiak .odb fitxategira lehen aldiz gehitzeko
-	// metodoa
-	public void inicializarODB(List<Jokalaria> zerrenda) {
-		// Datu-basearekin komunikatzeko EntityManager-a sortu
-		EntityManager em = emf.createEntityManager();
-		try {
-			// Transakzioa hasi: txertatze guztiak unitate bakar gisa kudeatzeko
-			em.getTransaction().begin();
-			// Zerrendako jokalari bakoitzeko begizta bat (loop) exekutatu
-			for (Jokalaria j : zerrenda) {
-				// Egiaztatu jokalaria existitzen den datu-basean bere NAN-a erabiliz
-				if (em.find(Jokalaria.class, j.getNAN()) == null) {
-					// Existitzen ez bada, jokalari berria datu-basean txertatu (persist)
-					em.persist(j);
+			pstmt.setString(1, taldeIzena);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					// Usamos los nombres de columna de tu dump SQL
+					Jokalaria j = new Jokalaria();
+					j.setNAN(rs.getString("NAN"));
+					j.setIzena(rs.getString("Jok_Izena"));
+					j.setAbizena(rs.getString("Jok_Abizena"));
+					j.setTaldea(rs.getString("Talde_Izena"));
+					j.setPrezioa(rs.getInt("Merka_Prezioa"));
+					// Si tu POJO tiene JaiotzeData, mapealo así:
+					// j.setJaiotzeData(rs.getString("Jaio_Data"));
+
+					lista.add(j);
 				}
 			}
-			// Aldaketa guztiak datu-basean behin betiko finkatu (commit)
-			em.getTransaction().commit();
-		} finally {
-			em.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
+		return lista;
 	}
 
-	// Deitzeko beste metodoengatik
-	public void close() {
-		emf.close();
+	public void inicializarODB(List<Jokalaria> zerrenda) {
+		String sql = "INSERT IGNORE INTO jokalariak (NAN, Jok_Izena, Jok_Abizena, Jaio_Data, Merka_Prezioa, Talde_Izena) VALUES (?, ?, ?, ?, ?, ?)";
+
+		try (Connection kon = konexioa.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
+
+			for (Jokalaria j : zerrenda) {
+				pstmt.setString(1, j.getNAN());
+				pstmt.setString(2, j.getIzena());
+				pstmt.setString(3, j.getAbizena());
+				pstmt.setString(4, j.getJaiotzeData()); // Asegúrate que el formato sea YYYY-MM-DD
+				pstmt.setInt(5, j.getPrezioa());
+				pstmt.setString(6, j.getTaldea());
+				pstmt.addBatch();
+			}
+			pstmt.executeBatch();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 }

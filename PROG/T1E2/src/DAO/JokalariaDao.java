@@ -48,33 +48,23 @@ public class JokalariaDao {
 	 * Jokalari baten taldea aldatzen du MySQL datu-basean. (Ez-estatikoa denez,
 	 * erroreak saihestuko ditugu)
 	 */
-	public boolean aldatuTaldea(String nan, String taldeaBerria) {
-		// Balidazioa: null edo hutsik badago, zuzenean false
-		// Sarrerako datuak egokiak direla ziurtatu (ez daudela hutsik) datu-basera
-		// deitu baino lehen
-		if (nan == null || nan.trim().isEmpty() || taldeaBerria == null || taldeaBerria.trim().isEmpty()) {
+	public boolean aldatuTaldea(String nan, String nuevoTalde) {
+		// Esta es la sentencia SQL que hace que el cambio sea permanente en XAMPP
+		String sql = "UPDATE jokalariak SET Talde_Izena = ? WHERE NAN = ?";
+		ConexionDB db = new ConexionDB();
+
+		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
+
+			pstmt.setString(1, nuevoTalde);
+			pstmt.setString(2, nan);
+
+			int filas = pstmt.executeUpdate(); // ESTO es lo que guarda de verdad
+			return filas > 0;
+
+		} catch (SQLException e) {
+			System.out.println("Errorea MySQL-n gordetzean: " + e.getMessage());
 			return false;
 		}
-		String sql = "UPDATE jokalariak SET Talde_Izena = ? WHERE NAN = ?";
-		// Konexioa ireki eta SQL agindua prestatu, 'Try-with-resources' erabiliz
-		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
-			// Balioak ezarri eta 'trim()' erabili alferreko zuriuneak kentzeko
-			pstmt.setString(1, taldeaBerria.trim());
-			pstmt.setString(2, nan.trim());
-			// 'executeUpdate' exekutatu eta aldaketak jasan dituzten errenkada kopurua jaso
-			int lerroak = pstmt.executeUpdate();
-			// Errenkadaren bat aldatu bada (lerroak > 0), prozesua ondo joan dela esan nahi
-			// du
-			if (lerroak > 0) {
-				System.out.println("MySQL: Jokalariaren (" + nan + ") taldea aldatu da: " + taldeaBerria);
-				return true;
-			}
-		} catch (SQLException e) {
-			// SQL errore bat badago (adibidez, 'Foreign Key' muga bat haustean), mezua
-			// inprimatu
-			System.err.println("Errorea taldea aldatzean: " + e.getMessage());
-		}
-		return false;
 	}
 
 	/**
@@ -108,5 +98,27 @@ public class JokalariaDao {
 
 	public ArrayList<Jokalaria> getListaJokalariak() {
 		return zerrendaJokalariak;
+	}
+
+	public void eguneratuJokalaria(Jokalaria j) {
+		String sql = "UPDATE jokalariak SET Talde_Izena = ?, Puntuak = ? WHERE NAN = ?";
+		ConexionDB db = new ConexionDB();
+
+		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
+
+			// Seteamos los valores que han cambiado
+			pstmt.setString(1, j.getTaldea());
+			// pstmt.setInt(2, j.getPuntuak()); // Si tienes puntos, si no, quita esta línea
+			pstmt.setString(3, j.getNAN()); // El NAN es el que manda para saber a quién actualizar
+
+			int filasAfectadas = pstmt.executeUpdate();
+
+			if (filasAfectadas > 0) {
+				System.out.println("Datuak ondo gorde dira MySQL-n!");
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Errorea eguneratzerakoan: " + e.getMessage());
+		}
 	}
 }

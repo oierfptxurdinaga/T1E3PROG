@@ -47,4 +47,8 @@ public class Jaurdunaldia {
 	public String getTaldeGaldu() {
 		return taldeGaldu != null ? taldeGaldu : "---";
 	}
+
+	public ArrayList<Partidua> getPartiduak() {
+		return partiduak;
+	}
 }

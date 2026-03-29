@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * denboraldi bateko sailkapenak kudeatzeko.
  * </p>
  *
- * @author ZureIzena
+ * @author Talde1
  * @version 1.0
  */
 public class Puntuazioa {

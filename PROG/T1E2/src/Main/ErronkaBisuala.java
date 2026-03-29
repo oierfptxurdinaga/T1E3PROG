@@ -1,4 +1,4 @@
-package Main;
+package main;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -387,33 +387,38 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 			cardLayout.show(contentPanel, "Jokalariak");
 
 			// Fitxaketa prozesu konplexua: MySQL eta ObjectDB aldi berean sinkronizatu
-		} else if (src == btnFitxatu) {
+		} else if (src == btnFitxatu) {// 1. Hautatutako jokalaria lortu
 			Jokalaria aukeratuta = jokalariaList.getSelectedValue();
 			if (aukeratuta == null) {
 				JOptionPane.showMessageDialog(this, "Mesedez, hautatu jokalari bat");
 				return;
 			}
+			// 2. Combo-etako taldeak lortu
 			String taldeZaharra = cbTalde1.getSelectedItem().toString();
 			String taldeBerria = cbTalde2.getSelectedItem().toString();
 			String nanJokalaria = aukeratuta.getNAN();
-			// Egiaztatu jokalaria ez dela talde berera aldatzen ari
+			// 3. Egiaztatu jokalaria ez dela talde berera aldatzen ari
 			if (taldeZaharra.equals(taldeBerria)) {
-				JOptionPane.showMessageDialog(this, "Jokalari hau talde honetan jolasten du");
+				JOptionPane.showMessageDialog(this, "Jokalari hau lehendik ere talde honetan dago!");
 			} else {
-				JokalariaDao jDao = new JokalariaDao();
-				// Lehenik MySQL-n aldatu
+				// 4. DAO-a erabili (Zure JokalariaObjectDB klasea erabiliko dugu,
+				// orain JDBC/MySQL bidez funtzionatzen duena)
+				JokalariaObjectDB jDao = new JokalariaObjectDB();
+				// MySQL-n aldatu (Gogoratu klase honen barruan 'Talde_Izena' erabiltzen dugula
+				// SQL-n)
 				boolean mysqlOk = jDao.aldatuTaldea(nanJokalaria, taldeBerria);
 				if (mysqlOk) {
-					// MySQL ondo badoa, ObjectDB (JPA) bidez ere eguneratu datuak koherenteak
-					// izateko
-					JokalariaObjectDB odbManager = new JokalariaObjectDB();
-					odbManager.aldatuTaldea(nanJokalaria, taldeBerria);
-					odbManager.close();
-					// Interfazea freskatu jokalari berria ikusteko
-					eguneratuJokalariak(taldeBerria);
-					JOptionPane.showMessageDialog(this, "Fitxaketa ondo egin da");
+					// Datuak ondo aldatu badira:
+					// Jokalariari objektuan ere taldea aldatu (interfazean berehala ikusteko)
+					aukeratuta.setTaldea(taldeBerria);
+					// Interfazea freskatu:
+					// Bi aukera dituzu: zerrenda hustu edo jatorrizko taldea kargatu berriro
+					eguneratuJokalariak(taldeZaharra);
+					JOptionPane.showMessageDialog(this, "Fitxaketa ondo egin da: " + aukeratuta.getIzena() + " orain "
+							+ taldeBerria + " taldekoa da.");
 				} else {
-					JOptionPane.showMessageDialog(this, "Errorea gertatu da MySQL datu-basean");
+					JOptionPane.showMessageDialog(this, "Errorea gertatu da fitxaketa egitean MySQL-n. "
+							+ "\nZiurtatu taldearen izena existitzen dela.");
 				}
 			}
 		}
