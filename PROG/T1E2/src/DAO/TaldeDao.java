@@ -64,7 +64,7 @@ public class TaldeDao {
 				}
 			}
 		} catch (SQLException e) {
-			System.err.println("Errorea taldea aldatzean (MySQL): " + e.getMessage());
+			System.err.println("Errorea taldea aldatzean: " + e.getMessage());
 		}
 		return IzenaTaldeak;
 	}

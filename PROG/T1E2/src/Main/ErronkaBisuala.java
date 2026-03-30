@@ -33,7 +33,8 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 
 	// Hasiera
 	private JLabel logoaImg1, logoaImg2, img1, img2;
-	private JButton atzerantzHasiera, ateraHasiera, klasifikazioaIkusi, sartuEmaitza, taldeakIkusi, jokalariakAldatuBtn;
+	private JButton atzerantzHasiera, ateraHasiera, klasifikazioaIkusi, sartuEmaitza, taldeakIkusi, jokalariakAldatuBtn,
+			sortuXml;
 
 	// Klasifikazioa
 	private JTable tablaKlasif;
@@ -170,6 +171,10 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 		jokalariakAldatuBtn.setBounds(600, 530, 250, 40);
 		jokalariakAldatuBtn.addActionListener(this);
 
+		sortuXml = new JButton("Sortu XML");
+		sortuXml.setBounds(600, 480, 250, 40);
+		sortuXml.addActionListener(this);
+
 		HasierakoPanela.add(titleHasiera);
 		HasierakoPanela.add(logoaImg2);
 		HasierakoPanela.add(img1);
@@ -180,6 +185,7 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 		HasierakoPanela.add(sartuEmaitza);
 		HasierakoPanela.add(taldeakIkusi);
 		HasierakoPanela.add(jokalariakAldatuBtn);
+		HasierakoPanela.add(sortuXml);
 
 		// ---------------- KLASIFIKAZIOA PANELA ----------------
 		KlasifikazioaPanela = new JPanel(null);
@@ -347,16 +353,17 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 		// Login prozesua: erabiltzailea egiaztatu eta rola lortu (Admin,
 		// Presidentea...)
 		if (src == sartu) {
-			String rola = Metodoak.login(textErabiltzaile.getText(), new String(textPasahitza.getPassword()));
+			String u = textErabiltzaile.getText();
+			String p = new String(textPasahitza.getPassword());
+			String rola = Metodoak.login(u, p);
 			if (rola != null) {
-				// Saioa ondo hasi bada, baimendu diren botoiak erakutsi eta panel nagusira joan
+				// LERRO BAKARREAN: Botoia erakutsi soilik erabiltzailea "aelexpe" bada
+				sortuXml.setVisible(u.equals("aelexpe") && p.equals("12345"));
 				erakutsiBotoiakRolarenArabera(rola);
 				cardLayout.show(contentPanel, "Hasiera");
 			} else {
 				JOptionPane.showMessageDialog(null, "Erabiltzaile edo Pasahitz okerra");
 			}
-
-			// Aplikazioaren nabigazioa: CardLayout erabiliz panel batetik bestera aldatu
 		} else if (src == ateraLogin || src == ateraHasiera || src == ateraKlasif || src == ateraEmaitza
 				|| src == ateraTaldeak || src == ateraAldatu) {
 			Metodoak.atera();
@@ -377,8 +384,13 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 
 		// Emaitzak gordetzeko prozesua: TableModel-etik ArrayList-era eta ondoren DB-ra
 		else if (src == gordeEmaitza) {
-			Metodoak.prozesatuEmaitzak(modeloEmaitzak); // JTable -> ArrayList
-			Metodoak.gordeDatuak(); // ArrayList -> DB
+			// Balidatu datuak. Ondo badaude (true), orduan gorde.
+			if (Metodoak.prozesatuEmaitzak(modeloEmaitzak)) {
+				Metodoak.gordeDatuak(); // <--- Bakarrik exekutatuko da dena ondo badago
+				JOptionPane.showMessageDialog(null, "Datuak ondo gorde dira fitxategian.");
+			}
+			// Faltsua bada, ez du ezer gehiago egingo eta erabiltzaileak errorea konpondu
+			// beharko du
 
 			// ComboBox-ean talde bat hautatzean, taulak automatikoki iragazi
 		} else if (src == comboBox) {
@@ -387,21 +399,22 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 			cardLayout.show(contentPanel, "Jokalariak");
 
 			// Fitxaketa prozesu konplexua: MySQL eta ObjectDB aldi berean sinkronizatu
-		} else if (src == btnFitxatu) {// 1. Hautatutako jokalaria lortu
+		} else if (src == btnFitxatu) {
+			// Hautatutako jokalaria lortu
 			Jokalaria aukeratuta = jokalariaList.getSelectedValue();
 			if (aukeratuta == null) {
 				JOptionPane.showMessageDialog(this, "Mesedez, hautatu jokalari bat");
 				return;
 			}
-			// 2. Combo-etako taldeak lortu
+			// Combo-etako taldeak lortu
 			String taldeZaharra = cbTalde1.getSelectedItem().toString();
 			String taldeBerria = cbTalde2.getSelectedItem().toString();
 			String nanJokalaria = aukeratuta.getNAN();
-			// 3. Egiaztatu jokalaria ez dela talde berera aldatzen ari
+			// Egiaztatu jokalaria ez dela talde berera aldatzen ari
 			if (taldeZaharra.equals(taldeBerria)) {
 				JOptionPane.showMessageDialog(this, "Jokalari hau lehendik ere talde honetan dago!");
 			} else {
-				// 4. DAO-a erabili (Zure JokalariaObjectDB klasea erabiliko dugu,
+				// DAO-a erabili (Zure JokalariaObjectDB klasea erabiliko dugu,
 				// orain JDBC/MySQL bidez funtzionatzen duena)
 				JokalariaObjectDB jDao = new JokalariaObjectDB();
 				// MySQL-n aldatu (Gogoratu klase honen barruan 'Talde_Izena' erabiltzen dugula
@@ -420,6 +433,15 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 					JOptionPane.showMessageDialog(this, "Errorea gertatu da fitxaketa egitean MySQL-n. "
 							+ "\nZiurtatu taldearen izena existitzen dela.");
 				}
+			}
+		} else if (src == sortuXml) {
+			// De esta manera llamamos directamente a la clase que ya creaste
+			// Pasamos un array vacío porque el main de MainXML espera String[] args
+			try {
+				MainXML.main(new String[0]);
+				JOptionPane.showMessageDialog(this, "XML fitxategia ondo sortu da!");
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(this, "Errorea XML-a sortzean: " + ex.getMessage());
 			}
 		}
 	}
@@ -493,10 +515,35 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 	}
 
 	public static void main(String[] args) {
-		// EventQueue.invokeLater: Erabiltzaile-interfazearen (GUI) haria modu seguruan
-		// kudeatzeko
-		// Honek ziurtatzen du leihoa 'Event Dispatch Thread' (EDT) izeneko harian
-		// irekitzen dela
+		// LEHENENGO: Log fitxategia konfiguratu behar da aplikazioa hasi orduko
+		// Honek 'aplikazioa.log' sortuko du eta gertakariak erregistratzen hasiko da
+		Metodoak.konfiguratuLog();
+		// ONDOREN: Itxura aldatu behar da, ezer marraztu baino lehen
+		try {
+			// Sistema eragilearen (Windows, Linux, Mac) itxura natiboa ezartzen du
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			// Errore bat badago, kontsolan idatzi baina programak jarraituko du itxura
+			// zaharrarekin
+			e.printStackTrace();
+		}
+		// AZKENIK: Leihoa sortu eta erakutsi
+		// EventQueue.invokeLater erabiltzen dugu GUI-aren haria segurua izateko
 		EventQueue.invokeLater(() -> new ErronkaBisuala());
+	}
+
+	/**
+	 * Erabiltzaile izena eta pasahitza egiaztatzen ditu XML botoia erakusteko.
+	 * 
+	 * @param erabiltzailea Testu kutxatik jasotako izena.
+	 * @param pasahitza     Testu kutxatik jasotako pasahitza.
+	 */
+	private void egiaztatuXMLBaimena(String erabiltzailea, String pasahitza) {
+		// "aelexpe" bada eta pasahitza zuzena bada, botoia ikusgai jarri
+		if (erabiltzailea.equals("aelexpe") && pasahitza.equals("12345")) {
+			sortuXml.setVisible(true);
+		} else {
+			sortuXml.setVisible(false);
+		}
 	}
 }

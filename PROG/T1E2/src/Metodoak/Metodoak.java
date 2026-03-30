@@ -1,17 +1,21 @@
 package Metodoak;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-
+import java.util.logging.*;
+import java.io.IOException;
 import DAO.JaurdunaldiDao;
 import DAO.KlasifikazioaDao;
 import DAO.PartiduaDao;
 import DAO.TaldeDao;
 import E2.*;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
 
 /**
  * Metodoak klaseak aplikazioaren negozio-logika eta datuen kudeaketa
@@ -27,6 +31,9 @@ public class Metodoak {
 	private static TaldeDao taldeDao = new TaldeDao();
 	private static JaurdunaldiDao jaurdunaldiDao = new JaurdunaldiDao();
 	private static PartiduaDao partiduaDao = new PartiduaDao();
+
+	// Logger objektua sortu
+	private static final Logger logger = Logger.getLogger(Metodoak.class.getName());
 
 	/**
 	 * Aplikazioa abiaraztean DBko datu guztiak ArrayList-etara ekartzen ditu.
@@ -55,38 +62,47 @@ public class Metodoak {
 	 */
 	public static void gordeDatuak() {
 		KlasifikazioaDao kDao = new KlasifikazioaDao();
-		// 1. Egiaztatu zerrenda kargatuta dagoela: Ez badago daturik memorian, ezin
-		// dugu ezer gorde
+		// Egiaztatu zerrenda kargatuta dagoela
 		if (partiduakMasterList == null || partiduakMasterList.isEmpty()) {
-			System.out.println("Errorea: Ez dago partidurik memorian gordetzeko. Ziurtatu kargatuDatuak() deitu dela.");
+			logger.warning("Gorde nahi izan da baina zerrenda hutsik dago.");
 			return;
 		}
-		// 2. Partiduak eta Jaurdunaldiak banan-banan eguneratu datu-basean (DB)
-		for (Partidua p : partiduakMasterList) {
-			String irabazlea = "Berdinketa";
-			String galtzailea = "Berdinketa";
-			// Emaitzaren arabera, irabazlea eta galtzailea nor diren zehaztu
-			if (p.getResultLokala() > p.getResulBisitari()) {
-				irabazlea = p.getTaldeLokala();
-				galtzailea = p.getTaldeBisitari();
-			} else if (p.getResulBisitari() > p.getResultLokala()) {
-				irabazlea = p.getTaldeBisitari();
-				galtzailea = p.getTaldeLokala();
+		boolean aldaketakDauden = false;
+		try {
+			// Partiduak eta Jaurdunaldiak prozesatu
+			for (Partidua p : partiduakMasterList) {
+				// Soilik prozesatu emaitzaren bat sartu bada
+				if (p.getResultLokala() > 0 || p.getResulBisitari() > 0) {
+					aldaketakDauden = true;
+					String irabazlea = "Berdinketa";
+					String galtzailea = "Berdinketa";
+					if (p.getResultLokala() > p.getResulBisitari()) {
+						irabazlea = p.getTaldeLokala();
+						galtzailea = p.getTaldeBisitari();
+					} else if (p.getResulBisitari() > p.getResultLokala()) {
+						irabazlea = p.getTaldeBisitari();
+						galtzailea = p.getTaldeLokala();
+					}
+					// Datu-basean aldaketa egin
+					partiduaDao.modifyPartiduaEtaJaurdunaldi(p.getId_Par(), p.getResultLokala(), p.getResulBisitari(),
+							irabazlea, galtzailea);
+				}
 			}
-			// DAO-ko metodoari deitu aldaketak SQL bidez exekutatzeko (ID-a, emaitzak eta
-			// irabazleak bidaliz)
-			partiduaDao.modifyPartiduaEtaJaurdunaldi(p.getId_Par(), p.getResultLokala(), p.getResulBisitari(),
-					irabazlea, galtzailea);
+			// Aldaketak egon badira, klasifikazioa kalkulatu eta DBra bidali
+			if (aldaketakDauden) {
+				kalkulatuKlasifikazioa();
+				for (Taldea t : taldeakMasterList) {
+					kDao.modifyKlasifikazioa(t);
+				}
+				// LOG: Guardado exitoso registrado en el archivo
+				logger.info("Datu-basea ondo eguneratu da partidu eta sailkapen berriekin.");
+				JOptionPane.showMessageDialog(null, "Datu-basea ondo eguneratu da.");
+			}
+		} catch (Exception e) {
+			// LOG: Error crítico registrado con detalle
+			logger.severe("ERROREA datuak gordetzean: " + e.getMessage());
+			JOptionPane.showMessageDialog(null, "Errore bat gertatu da gordetzean. Begiratu aplikazioa.log");
 		}
-		// 3. Klasifikazioa berriz kalkulatu MEMORIAN: Gorde aurretik taldeen puntuak
-		// eguneratuta egon daitezen
-		kalkulatuKlasifikazioa();
-		// 4. Sailkapen berria (taldeen puntuak, irabazitakoak...) DBra bidali
-		for (Taldea t : taldeakMasterList) {
-			kDao.modifyKlasifikazioa(t);
-		}
-		// Erabiltzaileari jakinarazi prozesua ondo amaitu dela
-		JOptionPane.showMessageDialog(null, "Datu-basea ondo eguneratu da partidu eta klasifikazio berriekin.");
 	}
 
 	public static void kalkulatuKlasifikazioa() {
@@ -142,30 +158,25 @@ public class Metodoak {
 	/**
 	 * Taula (UI) eta ArrayList-a sinkronizatzen ditu gorde aurretik.
 	 */
-	public static void prozesatuEmaitzak(DefaultTableModel modeloEmaitzak) {
-		// Taulako errenkada bakoitzeko begizta bat hasi (0-tik hasita)
+	public static boolean prozesatuEmaitzak(DefaultTableModel modeloEmaitzak) {
 		for (int i = 0; i < modeloEmaitzak.getRowCount(); i++) {
 			try {
-				// Balioak taulako zutabe zehatzetatik lortu eta Integer-era bihurtu
-				// 1. zutabea: Lokalaren puntuak | 3. zutabea: Bisitariarenak | 5. zutabea:
-				// Partiduaren IDa
-				int puntosLoc = Integer.parseInt(modeloEmaitzak.getValueAt(i, 1).toString());
-				int puntosVis = Integer.parseInt(modeloEmaitzak.getValueAt(i, 3).toString());
-				int idPar = Integer.parseInt(modeloEmaitzak.getValueAt(i, 5).toString());
-				// Memoriako zerrenda nagusian (partiduakMasterList) partidua bilatu
-				for (Partidua p : partiduakMasterList) {
-					// ID-ak bat egiten badu, objektuaren emaitzak eguneratu
-					if (p.getId_Par() == idPar) {
-						p.setResultLokala(puntosLoc);
-						p.setResulBisitari(puntosVis);
-						break; // Partidua aurkituta, barne-begiztatik irten
-					}
+				String pLokStr = modeloEmaitzak.getValueAt(i, 1).toString();
+				String pBisStr = modeloEmaitzak.getValueAt(i, 3).toString();
+				int pLok = Integer.parseInt(pLokStr);
+				int pBis = Integer.parseInt(pBisStr);
+				if (pLok < 0 || pBis < 0) {
+					JOptionPane.showMessageDialog(null, "ERROREA " + (i + 1) + ". lerroan: Ezin dira negatiboak izan.");
+					return false; // <--- GELDITU ETA FALTSUA BUELTATU
 				}
+				// Hemen zure logika (zerrenda eguneratu...)
 			} catch (Exception e) {
-				// Errore bat badago (adibidez, zenbaki bat ez den zerbait idaztean), mezua eman
-				System.out.println("Errorea lerroa prozesatzean: " + e.getMessage());
+				JOptionPane.showMessageDialog(null, "ERROREA " + (i + 1) + ". lerroan: Formatu okerra.");
+				return false; // <--- GELDITU ETA FALTSUA BUELTATU
 			}
 		}
+		// Dena ondo badoa bakarrik iritsiko da hona
+		return true;
 	}
 
 	public static void kargatuErabiltzaileak() {
@@ -181,29 +192,39 @@ public class Metodoak {
 
 	public static String login(String erabiltzailea, String pasahitza) {
 		// Zerrenda hutsik badago, erabiltzaileak kargatu
-		if (erabiltzaileaklist == null)
+		if (erabiltzaileaklist == null) {
 			kargatuErabiltzaileak();
+			// LOG: Zerrenda kargatu dela erregistratu
+			logger.info("Erabiltzaileen zerrenda kargatu da.");
+		}
 		// Erabiltzaile bakoitza egiaztatu izena eta pasahitza bat datozen ikusteko
 		for (ErabiltzaileMota e : erabiltzaileaklist) {
 			if (e.getErabiltzailea().equals(erabiltzailea) && e.getPasahitza().equals(pasahitza)) {
+				// LOG: Login arrakastatsua. Erabiltzailea eta bere rola gordetzen dugu.
+				logger.info("LOGIN ZUZENA: " + erabiltzailea + " sartu da (" + e.baimenak() + " baimenarekin).");
 				// Login zuzena bada, erabiltzaile motari dagokion baimen-rola itzuli
 				return e.baimenak();
 			}
 		}
+		// Hona iristen bada, ez da erabiltzailerik aurkitu kredentzial horiekin
+		// LOG: Kontuz! Saio-hasiera okerra erregistratu segurtasuna zainduz.
+		logger.warning("LOGIN OKERRA: Erabiltzaile izen edo pasahitz okerra honekin: " + erabiltzailea);
 		// Aurkitzen ez bada, null itzuli (login okerra)
 		return null;
 	}
 
 	public static void atera() {
 		// Berrespen leiho bat erakutsi hiru aukerarekin: Bai, Ez, Utzi
-		int respuesta = JOptionPane.showConfirmDialog(null, "Atera baino lehen, gorde nahi duzu?", "Berrespena",
+		int erantzuna = JOptionPane.showConfirmDialog(null, "Atera baino lehen, gorde nahi duzu?", "Berrespena",
 				JOptionPane.YES_NO_CANCEL_OPTION);
 		// "BAI" sakatzean, datu guztiak datu-basean gorde eta programa itxi
-		if (respuesta == JOptionPane.YES_OPTION) {
+		if (erantzuna == JOptionPane.YES_OPTION) {
 			gordeDatuak();
+			System.out.println("Programa itxi egin duzu. Agurrr!!");
 			System.exit(0);
 			// "EZ" sakatzean, programa zuzenean itxi ezer gorde gabe
-		} else if (respuesta == JOptionPane.NO_OPTION) {
+		} else if (erantzuna == JOptionPane.NO_OPTION) {
+			System.out.println("Programa itxi egin duzu. Agurrr!!");
 			System.exit(0);
 		}
 		// "CANCEL" sakatuz gero, ez da ezer egiten eta programak jarraitu egiten du
@@ -272,22 +293,82 @@ public class Metodoak {
 
 		if (t != null) {
 			// GOIKO TAULA TXIKIA: Taldearen datu administratiboak
-			DefaultTableModel modeloPequena = (DefaultTableModel) tablaPequena.getModel();
-			modeloPequena.setRowCount(0); // Taula garbitu informazio zaharra kentzeko
+			DefaultTableModel modeloTxikia = (DefaultTableModel) tablaPequena.getModel();
+			modeloTxikia.setRowCount(0); // Taula garbitu informazio zaharra kentzeko
 			// Taldea klaseko getter-ak erabili: SorreraUrtea, Lehendakari eta N_Bazkideak
 			// Oharra: Datu hauek 0 edo hutsik badatoz, TaldeDao-n karga zuzendu behar da
-			Object[] filaTaldea = { t.getSorreraUrtea(), t.getLehendakari(), t.getN_Bazkideak() };
-			modeloPequena.addRow(filaTaldea);
+			Object[] zerrendaTaldea = { t.getSorreraUrtea(), t.getLehendakari(), t.getN_Bazkideak() };
+			modeloTxikia.addRow(zerrendaTaldea);
 			// BEHEKO TAULA HANDIA: Jokalarien zerrenda eguneratua (MySQL-tik)
 			DAO.JokalariaDao jDao = new DAO.JokalariaDao();
 			ArrayList<Jokalaria> jokalariak = jDao.kargatuJokalariakTaldeka(aukeratuta);
-			DefaultTableModel modeloGrande = (DefaultTableModel) tablaGrande.getModel();
-			modeloGrande.setRowCount(0); // Jokalarien taula garbitu
+			DefaultTableModel modeloHandia = (DefaultTableModel) tablaGrande.getModel();
+			modeloHandia.setRowCount(0); // Jokalarien taula garbitu
 			for (Jokalaria j : jokalariak) {
 				// Jokalari bakoitzaren lerroa gehitu (Izena, Abizena, Jaiotza...)
-				modeloGrande.addRow(new Object[] { j.getIzena(), j.getAbizena(), j.getJaiotzeData(), j.getNAN(),
+				modeloHandia.addRow(new Object[] { j.getIzena(), j.getAbizena(), j.getJaiotzeData(), j.getNAN(),
 						t.getIzena(), j.getPrezioa() });
 			}
+		}
+	}
+
+	public static void sortuXMLFitxategia() {
+		try {
+			// DAO-ak eta datuak kargatu
+			TaldeDao taldeDao = new TaldeDao();
+			JaurdunaldiDao jaurDao = new JaurdunaldiDao();
+			PartiduaDao parDao = new PartiduaDao();
+			ArrayList<Taldea> taldeak = taldeDao.kargatuTaldeak();
+			ArrayList<Jaurdunaldia> jaurdunaldiak = jaurDao.kargatuJaurdunaldiak();
+			ArrayList<Partidua> partiduak = parDao.kargatuPartiduak();
+			// Partiduak jaurdunaldiekin lotu (Logika nagusia)
+			if (jaurdunaldiak != null && partiduak != null) {
+				for (Jaurdunaldia j : jaurdunaldiak) {
+					ArrayList<Partidua> partiduakJornada = new ArrayList<>();
+					for (Partidua p : partiduak) {
+						if (p.getId_Par() == j.getIdPar()) {
+							partiduakJornada.add(p);
+						}
+					}
+					j.setPartiduak(partiduakJornada);
+				}
+			}
+			// Denboraldia objektua osatu
+			Denboraldia den = new Denboraldia("2024-2025", jaurdunaldiak, new ArrayList<>());
+			den.setTaldeak(taldeak);
+			// JAXB bidez XML fitxategia sortu
+			JAXBContext context = JAXBContext.newInstance(Denboraldia.class);
+			Marshaller marshaller = context.createMarshaller();
+			marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+			File f = new File("Denboraldia_2024-2025.xml");
+			marshaller.marshal(den, f);
+			// --- LOG: XML-a ondo sortu dela erregistratu ---
+			logger.info("XML GENERAZIOA: Fitxategia ondo sortu da: " + f.getName());
+			// Erabiltzaileari mezua erakutsi
+			JOptionPane.showMessageDialog(null, "XML fitxategia ondo sortu da hemen:\n" + f.getAbsolutePath(),
+					"Sormen Arrakastatsua", JOptionPane.INFORMATION_MESSAGE);
+		} catch (Exception e) {
+			// --- LOG: Errore kritikoa erregistratu xehetasunekin ---
+			logger.severe("ERROREA XML-A SORTZEAN: " + e.getMessage());
+			JOptionPane.showMessageDialog(null, "Errorea XML-a sortzean: " + e.getMessage(), "Errorea",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+	}
+
+	public static void konfiguratuLog() {
+		try {
+			// "aplikazioa.log" fitxategia sortu. 'true' jarrita, mezu berriak erantsi
+			// egingo dira (append)
+			FileHandler fh = new FileHandler("aplikazioa.log", true);
+			logger.addHandler(fh);
+			// Formatu sinplea eman (testu arrunta, ez XML)
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+			// Kontsolako mezuak ekiditeko (aukerazkoa)
+			logger.setUseParentHandlers(false);
+		} catch (IOException | SecurityException e) {
+			System.err.println("Ezin izan da Log fitxategia konfiguratu: " + e.getMessage());
 		}
 	}
 }
