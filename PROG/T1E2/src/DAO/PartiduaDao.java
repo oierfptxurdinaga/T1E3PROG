@@ -8,13 +8,26 @@ import javax.swing.JOptionPane;
 import DB.ConexionDB;
 import E2.Partidua;
 
+/**
+ * Partiduen datuak kudeatzeko DAO klasea. Partiduen emaitzak kargatzeaz,
+ * puntuak eguneratzeaz eta jaurdunaldiko informazioarekin sinkronizatzeaz
+ * arduratzen da. * @author Talde1
+ * 
+ * @version 1.0
+ */
 public class PartiduaDao {
+
+	/** Datu-basearekiko konexioa kudeatzen duen objektua */
 	private ConexionDB db = new ConexionDB();
 
+	/**
+	 * Datu-basetik partidu guztien zerrenda kargatzen du, data eta ordua bereiziz.
+	 * * @return Partidua objektuen ArrayList bat, DBko informazio guztiarekin.
+	 */
 	public ArrayList<Partidua> kargatuPartiduak() {
 		ArrayList<Partidua> zerrenda = new ArrayList<>();
 		// SQL-ko DATE() eta TIME() funtzioak erabiltzen dira 'ordutegia' zutabea bitan
-		// banatzeko (data eta ordua)
+		// banatzeko
 		String sql = "SELECT Id_Par, Talde_Lok, Talde_Bis, Result_Lok, Result_Bis, "
 				+ "DATE(ordutegia) as fecha, TIME(ordutegia) as hora FROM partiduak";
 		// Konexioa automatikoki kudeatzen da 'try-with-resources' blokearen bidez
@@ -25,51 +38,58 @@ public class PartiduaDao {
 			while (rs.next()) {
 				// Partidua objektuaren eraikitzailea deitzen da zutabeen balioak erabiliz
 				zerrenda.add(new Partidua(rs.getInt("Id_Par"), rs.getString("Talde_Lok"), rs.getString("Talde_Bis"),
-						rs.getInt("Result_Lok"), rs.getInt("Result_Bis"),
-						// 'as' bidez sortutako ezizenak (alias) erabiltzen dira data eta ordua lortzeko
-						rs.getString("fecha"), rs.getString("hora")));
+						rs.getInt("Result_Lok"), rs.getInt("Result_Bis"), rs.getString("fecha"), rs.getString("hora")));
 			}
 		} catch (Exception e) {
-			System.out.println("Errorea DAO partiduak: " + e.getMessage());
+			System.out.println("Errorea DAO partiduak kargatzean: " + e.getMessage());
 		}
 		return zerrenda;
 	}
 
+	/**
+	 * Partidu baten puntuak soilik eguneratzen ditu 'partiduak' taulan. * @param
+	 * idPar Eguneratu nahi den partiduaren IDa.
+	 * 
+	 * @param pLoc Talde lokalaren puntuak.
+	 * @param pVis Bisitariaren puntuak.
+	 */
 	public void eguneratuPuntuak(int idPar, int pLoc, int pVis) {
-		// Zure taulako zutabe izenak: Result_Lok, Result_Bis, Id_Par
 		String sql = "UPDATE partiduak SET Result_Lok = ?, Result_Bis = ? WHERE Id_Par = ?";
-		// Konexioa ireki eta SQL agindua prestatu 'Try-with-resources' blokean
 		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
-			// Metodoaren parametroak (puntuak eta id-a) SQL-ko galdera-ikurretan (?) sartu
+			// Parametroak SQL-ko galdera-ikurretan (?) sartu
 			pstmt.setInt(1, pLoc);
 			pstmt.setInt(2, pVis);
 			pstmt.setInt(3, idPar);
-			// Datu-basean aldaketa egikaritu (UPDATE denez, executeUpdate erabiltzen da)
+			// Datu-basean aldaketa egikaritu
 			pstmt.executeUpdate();
 		} catch (Exception e) {
-			// Errore bat gertatzekotan, mezu bat erakutsiko du arazoren bat egon dela
-			// adierazteko
 			System.out.println("Errorea partiduak eguneratzean: " + e.getMessage());
 		}
 	}
 
+	/**
+	 * Partidu baten emaitza eta jaurdunaldiko irabazlea/galtzailea eguneratzen ditu
+	 * transakzio baten bidez. * @param idPar Partiduaren IDa.
+	 * 
+	 * @param resLoc     Lokalaren emaitza.
+	 * @param resVis     Bisitariaren emaitza.
+	 * @param irabazlea  Irabazi duen taldearen izena.
+	 * @param galtzailea Galdu duen taldearen izena.
+	 */
 	public void modifyPartiduaEtaJaurdunaldi(int idPar, int resLoc, int resVis, String irabazlea, String galtzailea) {
 		String sqlPartidua = "UPDATE partiduak SET Result_Lok = ?, Result_Bis = ? WHERE Id_Par = ?";
 		String sqlJaurdu = "UPDATE jaurdunaldia SET Talde_Irabazlea = ?, Talde_Galdu = ? WHERE Id_Par = ?";
-		// Datu-baserako konexio bakarra ireki, bi eguneraketak (UPDATE) barnean egiteko
 		try (Connection kon = db.konektatu()) {
-			// AutoCommit-a egiaztatu: transakzio bakoitza berehala gauzatuko dela
-			// ziurtatzen du
+			// AutoCommit-a aktibatu aldaketak berehala gauzatzeko
 			kon.setAutoCommit(true);
-			// Lehenengo PreparedStatement-a: Partiduko emaitza zehatzak eguneratzeko
+			// 1. Partiduko emaitza zehatzak eguneratu
 			try (PreparedStatement ps1 = kon.prepareStatement(sqlPartidua)) {
 				ps1.setInt(1, resLoc);
 				ps1.setInt(2, resVis);
 				ps1.setInt(3, idPar);
 				ps1.executeUpdate();
 			}
-			// Bigarren PreparedStatement-a: Irabazlearen eta galtzailearen izenak
-			// eguneratzeko
+			// 2. Jaurdunaldiko irabazle eta galtzaileak eguneratu
 			try (PreparedStatement ps2 = kon.prepareStatement(sqlJaurdu)) {
 				ps2.setString(1, irabazlea);
 				ps2.setString(2, galtzailea);
@@ -77,18 +97,23 @@ public class PartiduaDao {
 				ps2.executeUpdate();
 			}
 		} catch (Exception e) {
+			System.err.println("Errorea modifyPartiduaEtaJaurdunaldi exekutatzean: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * Memorian dagoen partidu zerrenda osoa datu-basearekin sinkronizatzen du.
+	 * Irabazleak eta galtzaileak automatikoki kalkulatzen ditu eguneraketa
+	 * bakoitzeko. * @param partiduakMasterList Sinkronizatu nahi den partidu
+	 * zerrenda.
+	 */
 	public static void eguneratuPartiduakGuztiak(ArrayList<Partidua> partiduakMasterList) {
 		PartiduaDao pDao = new PartiduaDao();
-		// ArrayList-eko objektu bakoitzeko (for-each) eguneraketa prozesua hasten
-		// da
 		for (Partidua p : partiduakMasterList) {
 			String irabazlea = null;
 			String galtzailea = null;
-			// Partiduaren emaitza aztertu irabazlea eta galtzailea nor den erabakitzeko
+			// Emaitza aztertu irabazlea eta galtzailea nor den erabakitzeko
 			if (p.getResultLokala() > p.getResulBisitari()) {
 				irabazlea = p.getTaldeLokala();
 				galtzailea = p.getTaldeBisitari();
@@ -96,12 +121,11 @@ public class PartiduaDao {
 				irabazlea = p.getTaldeBisitari();
 				galtzailea = p.getTaldeLokala();
 			}
-			// DAO-ko metodoari deitu datu-baseko bi taulak (partiduak eta jaurdunaldia)
-			// aldatzeko
+			// DBko bi taulak sinkronizatu
 			pDao.modifyPartiduaEtaJaurdunaldi(p.getId_Par(), p.getResultLokala(), p.getResulBisitari(), irabazlea,
 					galtzailea);
 		}
-		// Erabiltzaileari prozesua ondo amaitu dela jakinarazteko leiho bat erakutsi
+		// Erabiltzaileari prozesua ondo amaitu dela jakinarazi
 		JOptionPane.showMessageDialog(null, "Datu-basea ondo sinkronizatu da ArrayList-arekin!");
 	}
 }

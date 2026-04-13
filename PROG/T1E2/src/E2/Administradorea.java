@@ -15,7 +15,7 @@ package E2;
  *   <li>Datuak gordetzea eta kudeatzea</li>
  * </ul>
  *
- * @author ZureIzena
+ * @author Talde1
  * @version 1.0
  */
 public class Administradorea extends ErabiltzaileMota {

@@ -12,7 +12,7 @@ package E2;
  * egiteko baimenak dituzte.
  * </p>
  *
- * @author ZureIzena
+ * @author Talde1
  * @version 1.0
  */
 public class ErabiltzaileNormala extends ErabiltzaileMota {

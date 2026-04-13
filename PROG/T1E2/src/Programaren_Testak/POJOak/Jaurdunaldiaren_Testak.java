@@ -1,4 +1,4 @@
-package Programaren_Testak;
+package Programaren_Testak.POJOak;
 
 import static org.junit.Assert.*;
 import org.junit.Test;

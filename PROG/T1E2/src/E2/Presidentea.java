@@ -12,7 +12,7 @@ package E2;
  * erabaki garrantzitsuak hartzeko baimenak izaten dituzte.
  * </p>
  *
- * @author ZureIzena
+ * @author Talde1
  * @version 1.0
  */
 public class Presidentea extends ErabiltzaileMota {

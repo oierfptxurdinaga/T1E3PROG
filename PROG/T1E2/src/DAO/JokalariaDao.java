@@ -9,16 +9,33 @@ import java.util.ArrayList;
 import DB.ConexionDB;
 import E2.Jokalaria;
 
+/**
+ * Jokalarien datuak kudeatzeko DAO klasea. MySQL datu-basearekin komunikazioa
+ * ezartzen du jokalariak kargatzeko, gehitzeko eta haien informazioa
+ * eguneratzeko. * @author Talde1
+ * 
+ * @version 1.0
+ */
 public class JokalariaDao {
+
+	/** Datu-basearekiko konexio objektua */
 	private ConexionDB db = new ConexionDB();
+
+	/** Jokalarien zerrenda memorian kudeatzeko (aukerakoa) */
 	private ArrayList<Jokalaria> zerrendaJokalariak;
 
+	/**
+	 * JokalariaDao-ren eraikitzailea. Zerrenda hasieratzen du.
+	 */
 	public JokalariaDao() {
 		zerrendaJokalariak = new ArrayList<>();
 	}
 
 	/**
-	 * Talde baten jokalariak kargatzen ditu MySQL-tik.
+	 * Talde zehatz baten jokalariak kargatzen ditu MySQL-tik. * @param taldeIzena
+	 * Jokalariak bilatzeko erabili nahi den taldearen izena.
+	 * 
+	 * @return Talde horretako jokalarien ArrayList bat.
 	 */
 	public ArrayList<Jokalaria> kargatuJokalariakTaldeka(String taldeIzena) {
 		ArrayList<Jokalaria> zerrenda = new ArrayList<>();
@@ -26,12 +43,13 @@ public class JokalariaDao {
 		// segurtasunagatik
 		String sql = "SELECT * FROM jokalariak WHERE Talde_Izena = ?";
 		// Konexioa eta PreparedStatement-a automatikoki ixteko blokea
+		// (try-with-resources)
 		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
-			// SQL-ko galdera-ikurra (?) metodoaren parametroarekin (taldeIzena) ordezkatu
+			// SQL-ko galdera-ikurra (?) parametroarekin ordezkatu
 			pstmt.setString(1, taldeIzena);
-			// Kontsulta exekutatu eta emaitzak (ResultSet) lortu
+			// Kontsulta exekutatu eta emaitzak ResultSet-ean lortu
 			try (ResultSet rs = pstmt.executeQuery()) {
-				// Emaitza bakoitzeko, Jokalaria objektu bat sortu eta zerrendan sartu
+				// Emaitza bakoitzeko Jokalaria objektu bat sortu eta zerrendan sartu
 				while (rs.next()) {
 					zerrenda.add(new Jokalaria(rs.getString("Jok_Izena"), rs.getString("Jok_Abizena"),
 							rs.getString("Jaio_Data"), rs.getString("NAN"), rs.getString("Talde_Izena"),
@@ -45,20 +63,21 @@ public class JokalariaDao {
 	}
 
 	/**
-	 * Jokalari baten taldea aldatzen du MySQL datu-basean. (Ez-estatikoa denez,
-	 * erroreak saihestuko ditugu)
+	 * Jokalari baten taldea aldatzen du MySQL datu-basean, NAN-a identifikatzaile
+	 * gisa erabiliz. * @param nan Jokalariaren NAN-a.
+	 * 
+	 * @param nuevoTalde Jokalariari esleitu nahi zaion talde berria.
+	 * @return true aldaketa ondo burutu bada, false bestela.
 	 */
 	public boolean aldatuTaldea(String nan, String nuevoTalde) {
-		// Esta es la sentencia SQL que hace que el cambio sea permanente en XAMPP
+		// Eguneraketa MySQL-n iraunkorra izateko SQL agindua
 		String sql = "UPDATE jokalariak SET Talde_Izena = ? WHERE NAN = ?";
 		ConexionDB db = new ConexionDB();
-
 		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
-
 			pstmt.setString(1, nuevoTalde);
 			pstmt.setString(2, nan);
-
-			int filas = pstmt.executeUpdate(); // ESTO es lo que guarda de verdad
+			// Aldatutako errenkada kopurua lortu (0 baino handiagoa bada, ondo gorde da)
+			int filas = pstmt.executeUpdate();
 			return filas > 0;
 
 		} catch (SQLException e) {
@@ -68,20 +87,19 @@ public class JokalariaDao {
 	}
 
 	/**
-	 * Jokalari GUZTIAK kargatzeko metodoa (ObjectDB hasieratzeko oso erabilgarria)
+	 * Datu-basean dauden jokalari GUZTIAK kargatzen ditu. Oso erabilgarria ObjectDB
+	 * fitxategia hasieratzeko edo migrazioak egiteko. * @return Jokalari guztien
+	 * zerrenda.
 	 */
-
 	public ArrayList<Jokalaria> kargatuJokalariGuztiak() {
 		ArrayList<Jokalaria> guztiak = new ArrayList<>();
-		// SQL kontsulta: Jokalari guztien datuak lortzeko (iragazkirik gabe)
+		// SQL kontsulta: Jokalari guztiak iragazkirik gabe lortzeko
 		String sql = "SELECT * FROM jokalariak";
-		// Baliabideak (konexioa, agindua eta emaitzak) automatikoki kudeatzeko egitura
 		try (Connection kon = db.konektatu();
 				PreparedStatement pstmt = kon.prepareStatement(sql);
 				ResultSet rs = pstmt.executeQuery()) {
-			// Emaitza-multzoan (ResultSet) hurrengo errenkadarik dagoen bitartean iteratu
+
 			while (rs.next()) {
-				// Jokalari bakoitzeko objektu bat sortu eta zerrendara gehitu
 				guztiak.add(
 						new Jokalaria(rs.getString("Jok_Izena"), rs.getString("Jok_Abizena"), rs.getString("Jaio_Data"),
 								rs.getString("NAN"), rs.getString("Talde_Izena"), rs.getInt("Merka_Prezioa")));
@@ -92,33 +110,44 @@ public class JokalariaDao {
 		return guztiak;
 	}
 
+	/**
+	 * Jokalari bat gehitzen du memorian dagoen zerrendara.
+	 * 
+	 * @param j Gehitu nahi den jokalaria.
+	 */
 	public void gehituJokalaria(Jokalaria j) {
 		zerrendaJokalariak.add(j);
 	}
 
+	/**
+	 * Memorian gordetako jokalarien zerrenda bueltatzen du.
+	 * 
+	 * @return Jokalarien ArrayList-a.
+	 */
 	public ArrayList<Jokalaria> getListaJokalariak() {
 		return zerrendaJokalariak;
 	}
 
+	/**
+	 * Jokalari baten datu espezifikoak (Taldea, etab.) eguneratzen ditu MySQL-n.
+	 * 
+	 * @param j Eguneratu nahi den jokalari objektua.
+	 */
 	public void eguneratuJokalaria(Jokalaria j) {
-		String sql = "UPDATE jokalariak SET Talde_Izena = ?, Puntuak = ? WHERE NAN = ?";
+		// NAN-a gako nagusi gisa erabiltzen dugu zein jokalari aldatu behar den
+		// jakiteko
+		String sql = "UPDATE jokalariak SET Talde_Izena = ? WHERE NAN = ?";
 		ConexionDB db = new ConexionDB();
-
 		try (Connection kon = db.konektatu(); PreparedStatement pstmt = kon.prepareStatement(sql)) {
-
-			// Seteamos los valores que han cambiado
+			// Aldatutako balio berriak ezarri
 			pstmt.setString(1, j.getTaldea());
-			// pstmt.setInt(2, j.getPuntuak()); // Si tienes puntos, si no, quita esta línea
-			pstmt.setString(3, j.getNAN()); // El NAN es el que manda para saber a quién actualizar
-
+			pstmt.setString(2, j.getNAN());
 			int filasAfectadas = pstmt.executeUpdate();
-
 			if (filasAfectadas > 0) {
-				System.out.println("Datuak ondo gorde dira MySQL-n!");
+				System.out.println("Jokalariaren datuak ondo eguneratu dira MySQL-n!");
 			}
-
 		} catch (SQLException e) {
-			System.out.println("Errorea eguneratzerakoan: " + e.getMessage());
+			System.out.println("Errorea jokalaria eguneratzerakoan: " + e.getMessage());
 		}
 	}
 }

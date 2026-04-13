@@ -26,7 +26,7 @@ public abstract class ErabiltzaileMota {
 	 * behar da {@link #baimenak()} metodoa azpiklaseetan.
 	 * </p>
 	 *
-	 * @author ZureIzena
+	 * @author Talde1
 	 * @version 1.0
 	 */
 	public ErabiltzaileMota(String izena, String abizena, String NAN, String erabiltzailea, String pasahitza) {
