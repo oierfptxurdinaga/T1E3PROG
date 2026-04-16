@@ -29,9 +29,7 @@ class JaurdunaldiarenDAO_Testak {
 	@Test
 	void testKargatuJaurdunaldiak() {
 		ArrayList<Jaurdunaldia> zerrenda = jDao.kargatuJaurdunaldiak();
-
 		assertNotNull(zerrenda, "Zerrenda ezin da null izan.");
-
 		// Daturen bat badago DBan, objektuaren barruko datuak egiaztatu
 		if (!zerrenda.isEmpty()) {
 			Jaurdunaldia j = zerrenda.get(0);

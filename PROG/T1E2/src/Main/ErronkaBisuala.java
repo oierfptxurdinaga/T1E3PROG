@@ -384,15 +384,18 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 
 		// Emaitzak gordetzeko prozesua: TableModel-etik ArrayList-era eta ondoren DB-ra
 		else if (src == gordeEmaitza) {
-			// Balidatu datuak. Ondo badaude (true), orduan gorde.
-			if (Metodoak.prozesatuEmaitzak(modeloEmaitzak)) {
-				Metodoak.gordeDatuak(); // <--- Bakarrik exekutatuko da dena ondo badago
-				JOptionPane.showMessageDialog(null, "Datuak ondo gorde dira fitxategian.");
-			}
-			// Faltsua bada, ez du ezer gehiago egingo eta erabiltzaileak errorea konpondu
-			// beharko du
+		    if (Metodoak.prozesatuEmaitzak(modeloEmaitzak)) {
+		        // 1. Guardar en DB/Fichero
+		        Metodoak.gordeDatuak(); 
+		        
+		        // 2. RECALCULAR: Muy importante para que los puntos cambien
+		        Metodoak.kalkulatuKlasifikazioa(); 
+		        
+		        // 3. REFRESCAR LA TABLA VISUAL: Para que el usuario vea los cambios
+		        eguneratuKlasifikazioa(); 
 
-			// ComboBox-ean talde bat hautatzean, taulak automatikoki iragazi
+		        JOptionPane.showMessageDialog(null, "Emaitzak ondo gorde eta sailkapena eguneratu da.");
+		    }
 		} else if (src == comboBox) {
 			Metodoak.actualizarTablasTaldeak((String) comboBox.getSelectedItem(), tablaPequena, tablaGrande);
 		} else if (src == jokalariakAldatuBtn) {
@@ -534,9 +537,8 @@ public class ErronkaBisuala extends JFrame implements ActionListener {
 
 	/**
 	 * Erabiltzaile izena eta pasahitza egiaztatzen ditu XML botoia erakusteko.
-	 * 
 	 * @param erabiltzailea Testu kutxatik jasotako izena.
-	 * @param pasahitza     Testu kutxatik jasotako pasahitza.
+	 * @param pasahitza Testu kutxatik jasotako pasahitza.
 	 */
 	private void egiaztatuXMLBaimena(String erabiltzailea, String pasahitza) {
 		// "aelexpe" bada eta pasahitza zuzena bada, botoia ikusgai jarri

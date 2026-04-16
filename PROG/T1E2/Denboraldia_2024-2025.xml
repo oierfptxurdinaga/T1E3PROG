@@ -5,14 +5,14 @@
         <jaurdunaldia>
             <idPar>1</idPar>
             <idJaurdu>1</idJaurdu>
-            <taldeIrabazlea>Loiola</taldeIrabazlea>
-            <taldeGaldu>Unamuno</taldeGaldu>
+            <taldeIrabazlea>Ibaizabal</taldeIrabazlea>
+            <taldeGaldu>LaSalle</taldeGaldu>
             <partidua>
                 <Id_Par>1</Id_Par>
                 <TaldeLokala>Ibaizabal</TaldeLokala>
                 <TaldeBisitari>LaSalle</TaldeBisitari>
-                <ResultLokala>80</ResultLokala>
-                <ResulBisitari>70</ResulBisitari>
+                <ResultLokala>85</ResultLokala>
+                <ResulBisitari>80</ResulBisitari>
                 <Data>2026-01-10</Data>
                 <Ordua>17:00:00</Ordua>
             </partidua>

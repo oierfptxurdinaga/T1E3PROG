@@ -152,20 +152,35 @@ public class Metodoak {
 	 * @return true datuak zuzenak badira, false formatu okerra badago.
 	 */
 	public static boolean prozesatuEmaitzak(DefaultTableModel modeloEmaitzak) {
-		for (int i = 0; i < modeloEmaitzak.getRowCount(); i++) {
-			try {
-				int pLok = Integer.parseInt(modeloEmaitzak.getValueAt(i, 1).toString());
-				int pBis = Integer.parseInt(modeloEmaitzak.getValueAt(i, 3).toString());
-				if (pLok < 0 || pBis < 0) {
-					JOptionPane.showMessageDialog(null, "ERROREA " + (i + 1) + ". lerroan: Ezin dira negatiboak izan.");
-					return false;
-				}
-			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, "ERROREA " + (i + 1) + ". lerroan: Formatu okerra.");
-				return false;
-			}
-		}
-		return true;
+	    for (int i = 0; i < modeloEmaitzak.getRowCount(); i++) {
+	        try {
+	            // 1. Leer datos de la tabla
+	            int pLok = Integer.parseInt(modeloEmaitzak.getValueAt(i, 1).toString());
+	            int pBis = Integer.parseInt(modeloEmaitzak.getValueAt(i, 3).toString());
+	            int idPartidoTablan = Integer.parseInt(modeloEmaitzak.getValueAt(i, 5).toString()); // ID oculto
+
+	            // 2. Validación básica
+	            if (pLok < 0 || pBis < 0) {
+	                JOptionPane.showMessageDialog(null, "ERROREA " + (i + 1) + ". lerroan: Ezin dira negatiboak izan.");
+	                return false;
+	            }
+
+	            // --- ESTO ES LO QUE TE FALTABA: ACTUALIZAR EL MASTER LIST ---
+	            for (Partidua p : partiduakMasterList) {
+	                if (p.getId_Par() == idPartidoTablan) {
+	                    p.setResultLokala(pLok);
+	                    p.setResulBisitari(pBis);
+	                    break; 
+	                }
+	            }
+	            // ----------------------------------------------------------
+
+	        } catch (Exception e) {
+	            JOptionPane.showMessageDialog(null, "ERROREA " + (i + 1) + ". lerroan: Formatu okerra.");
+	            return false;
+	        }
+	    }
+	    return true; // Si llega aquí, todo está actualizado en memoria y listo para gordeDatuak()
 	}
 
 	/**
